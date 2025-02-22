@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const frames = {
   none: {
-    draw: (ctx, x, y, width, height) => {}, // Empty function for no frame
+    draw: (ctx, x, y, width, height) => {}, 
   },
   pastel: {
     draw: (ctx, x, y, width, height) => {
@@ -134,6 +135,8 @@ const PhotoPreview = ({ capturedImages }) => {
   const navigate = useNavigate();
   const [stripColor, setStripColor] = useState("white");
   const [selectedFrame, setSelectedFrame] = useState("none");
+  const [email, setEmail] = useState("");  
+  const [status, setStatus] = useState(""); 
 
 
 
@@ -246,6 +249,47 @@ const PhotoPreview = ({ capturedImages }) => {
     link.click();
   };
 
+  const sendPhotoStripToEmail = async () => {
+    if (!email) {
+      setStatus("❗ Please enter a valid email address.");
+      return;
+    }
+  
+    try {
+      setStatus("📤 Sending email...");
+  
+      if (!stripCanvasRef.current) {
+        setStatus("❌ Error: Canvas not ready");
+        return;
+      }
+  
+      const imageData = stripCanvasRef.current.toDataURL("image/jpeg", 0.7); 
+  
+      const response = await axios.post("http://localhost:5000/send-photo-strip", {
+        recipientEmail: email,
+        imageData: imageData
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      });
+  
+      console.log("Server response:", response.data);
+  
+      if (response.data.message === "Photo strip sent successfully!") {
+        setStatus("Photo Strip sent successfully!");
+        setEmail("");
+      } else {
+        setStatus("Failed to send Photo Strip.");
+      }
+    } catch (error) {
+      console.error("Error details:", error.response || error);
+      setStatus(`Error: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
   return (
     <div className="photo-preview">
       <h2>Photo Strip Preview</h2>
@@ -271,7 +315,18 @@ const PhotoPreview = ({ capturedImages }) => {
         <button onClick={downloadPhotoStrip}>📥 Download Photo Strip</button>
         <button onClick={() => navigate("/")}>🔄 Take New Photos</button>
       </div>
-    </div>
+
+      <div className="email-section">
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <button onClick={sendPhotoStripToEmail}>Send to Email</button>
+        <p>{status}</p>
+      </div>
+  </div>
   );
 };
 
