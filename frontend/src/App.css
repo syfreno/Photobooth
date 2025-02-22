@@ -36,7 +36,11 @@
 .background-gradient {
   width: 100%;
   height: 100vh;
-  background: radial-gradient(circle at center, rgba(255, 153, 178, 0.5) 20%, rgba(255, 240, 245, 0.9) 40%, rgba(255, 250, 250, 1) 70%);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 153, 178, 0.5) 20%,
+    rgba(255, 240, 245, 0.9) 40%,
+    rgba(255, 250, 250, 1) 70%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -60,8 +64,11 @@
 .contact-container {
   width: 100%;
   height: 100vh;
-  background: radial-gradient(circle at center, rgba(255, 153, 178, 0.5) 20%, rgba(255, 240, 245, 0.9) 40%, rgba(255, 250, 250, 1) 70%);
-  display: flex;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 153, 178, 0.5) 20%,
+    rgba(255, 240, 245, 0.9) 40%,
+    rgba(255, 250, 250, 1) 70%); 
   justify-content: center;
   align-items: center;
   overflow: hidden;
@@ -145,8 +152,11 @@
 .background-gradient {
   width: 100%;
   height: 100vh;
-  background: radial-gradient(circle at center, rgba(255, 153, 178, 0.5) 20%, rgba(255, 240, 245, 0.9) 40%, rgba(255, 250, 250, 1) 70%);
-  display: flex;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 153, 178, 0.5) 20%,
+    rgba(255, 240, 245, 0.9) 40%,
+    rgba(255, 250, 250, 1) 70%); 
   justify-content: center;
   align-items: center;
   overflow: hidden;
@@ -158,7 +168,7 @@
 
 
 .photobooth-strip {
-  border-radius: 12px; 
+  border-radius: 0px; 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -212,6 +222,25 @@
   max-width: 700px;
   height: 450px;
   position: relative;
+}
+
+.filter-prompt {
+  text-align: center;
+  margin: 20px 0 15px 0;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px; 
+}
+
+.controls {
+  margin-bottom: 25px; 
 }
 
 /* live cam*/
@@ -278,6 +307,8 @@ button {
   border-radius: 10px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
+
+
 
 /* Fix Photo Strip Squishing */
 .photo-strip {
@@ -362,6 +393,18 @@ button {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+button:not(:disabled):hover {
+  background: linear-gradient(135deg, #ffc0cb, #ea909f);
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #999;
+  color: #666;
+}
+
 button:hover {
   background: linear-gradient(135deg, #ffc0cb, #ea909f) !important;
   color: white !important;
@@ -370,6 +413,7 @@ button:hover {
 
 button:active {
   transform: scale(0.98);
+  background: linear-gradient(135deg, #ea909f, #ffc0cb);
 }
 
 /* Color Picker Options */
@@ -408,8 +452,8 @@ button:active {
   width: 160px;
   height: 120px;
   object-fit: cover; 
-  border-radius: 8px;
-  border: 2px solid #000;
+  border-radius: 0px;
+  border: 1px solid #000;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   margin-bottom: 10px;
 }
