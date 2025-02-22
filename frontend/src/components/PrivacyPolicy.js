@@ -1,5 +1,3 @@
-// src/components/PrivacyPolicy.js
-
 import React from 'react';
 import '../App.css';
 
