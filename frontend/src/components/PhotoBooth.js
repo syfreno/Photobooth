@@ -145,20 +145,20 @@ const PhotoBooth = ({ setCapturedImages }) => {
             0, 0, targetWidth, targetHeight        
         );
         context.restore();
-        
+
         return canvas.toDataURL("image/png");
     }
 };
 
   return (
     <div className="photo-booth">
-      {countdown !== null && <h2 className="countdown animate">{countdown}</h2>}
+            {countdown !== null && <h2 className="countdown animate">{countdown}</h2>}
 
-      <div className="photo-container">
-        <div className="camera-container">
-          <video ref={videoRef} autoPlay className="video-feed" style={{ filter }} />
-          <canvas ref={canvasRef} className="hidden" />
-        </div>
+    <div className="photo-container">
+      <div className="camera-container">
+        <video ref={videoRef} autoPlay className="video-feed" style={{ filter }} />
+        <canvas ref={canvasRef} className="hidden" />
+      </div>
 
         <div className="preview-side">
           {capturedImages.map((image, index) => (
@@ -173,13 +173,17 @@ const PhotoBooth = ({ setCapturedImages }) => {
         </button>
       </div>
 
+      <p className="filter-prompt">Choose a filter before starting capture!</p>
+
       <div className="filters">
-        <button onClick={() => setFilter("none")}>No Filter</button>
-        <button onClick={() => setFilter("grayscale(100%)")}>Grayscale</button>
-        <button onClick={() => setFilter("sepia(100%)")}>Sepia</button>
-        <button onClick={() => setFilter("grayscale(100%) contrast(120%) brightness(110%) sepia(30%) hue-rotate(10deg) blur(0.4px)")}>Vintage</button>
-        <button onClick={() => setFilter("brightness(130%) contrast(105%) saturate(80%) blur(0.3px)")}>Soft</button>
+        <button onClick={() => setFilter("none")} disabled={capturing}>No Filter</button>
+        <button onClick={() => setFilter("grayscale(100%)")} disabled={capturing}>Grayscale</button>
+        <button onClick={() => setFilter("sepia(100%)")} disabled={capturing}>Sepia</button>
+        <button onClick={() => setFilter("grayscale(100%) contrast(120%) brightness(110%) sepia(30%) hue-rotate(10deg) blur(0.4px)")} disabled={capturing}>Vintage</button>
+        <button onClick={() => setFilter("brightness(130%) contrast(105%) saturate(80%) blur(0.3px)")} disabled={capturing}>Soft</button>
       </div>
+
+
     </div>
   );
 };
