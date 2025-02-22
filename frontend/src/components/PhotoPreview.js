@@ -313,7 +313,7 @@ const PhotoPreview = ({ capturedImages }) => {
 
       <div className="strip-buttons">
         <button onClick={downloadPhotoStrip}>📥 Download Photo Strip</button>
-        <button onClick={() => navigate("/")}>🔄 Take New Photos</button>
+        <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>
       </div>
 
       <div className="email-section">
