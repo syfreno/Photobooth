@@ -33,6 +33,43 @@
   color: white;
 }
 
+.paypal-form {
+  position: relative;
+  display: inline-block;
+}
+
+.paypal-form a::after {
+  content: "Support me with a donation!";
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  z-index: 10;
+}
+
+.paypal-form a:hover::after {
+  opacity: 1;
+}
+
+.paypal-button {
+  height: 32px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.paypal-button:hover {
+  transform: scale(1.1);
+}
+
 /* Privacy Policy */
 .background-gradient {
   width: 100%;
@@ -415,6 +452,8 @@ button {
   padding: 0 20px;
   background: radial-gradient(circle, #ffc0cb 20%, #fff 80%);
 }
+
+/* test */
 
 .welcome-container h1 {
   margin-bottom: 80px;
