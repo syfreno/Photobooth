@@ -9,6 +9,12 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const emailsDir = path.join(__dirname, "saved_emails");
+if (!fs.existsSync(emailsDir)) {
+  fs.mkdirSync(emailsDir);
+  console.log("Saved emails directory created");
+}
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -17,7 +23,6 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
 
 app.use(express.static("uploads"));
 
@@ -99,7 +104,7 @@ app.post("/send-photo-strip", async (req, res) => {
 
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail", // Can also use Outlook, Yahoo, etc.
+      service: "gmail",
       auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS
@@ -120,14 +125,40 @@ app.post("/send-photo-strip", async (req, res) => {
       ]
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Photo Strip sent:", info.response);
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully to:", recipientEmail);
 
-    res.status(200).json({ message: "Photo strip sent successfully!" });
+    res.status(200).json({ 
+      success: true,
+      message: "Photo strip sent successfully!"
+    });
   } catch (error) {
     console.error("Error sending photo strip:", error);
-    res.status(500).json({ message: "Failed to send photo strip", error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to send photo strip", 
+      error: error.message 
+    });
   }
+});
+
+app.get("/saved-emails", (req, res) => {
+  fs.readdir(emailsDir, (err, files) => {
+    if (err) {
+      return res.status(500).json({ message: "Error reading saved emails" });
+    }
+    const emails = files
+      .filter(file => file.endsWith('.json'))
+      .map(file => {
+        const data = JSON.parse(fs.readFileSync(path.join(emailsDir, file)));
+        return {
+          filename: file,
+          to: data.to,
+          date: data.date
+        };
+      });
+    res.json(emails);
+  });
 });
 
 app.get("/", (req, res) => {
