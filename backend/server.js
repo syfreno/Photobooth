@@ -20,7 +20,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(cors({
-  origin: ["http://localhost:3000, https://picapicaa.netlify.app"], 
+  origin: ["http://localhost:3000", "https://picapicaa.netlify.app"], 
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -75,9 +75,23 @@ app.post("/send-message", async (req, res) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });;
+
+    transporter.verify(function(error, success) {
+      if (error) {
+        console.error("Email verification failed:", error);
+      } else {
+        console.log("Email server is ready");
       }
     });
 
@@ -108,9 +122,23 @@ app.post("/send-photo-strip", async (req, res) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    transporter.verify(function(error, success) {
+      if (error) {
+        console.error("Email verification failed:", error);
+      } else {
+        console.log("Email server is ready");
       }
     });
 
