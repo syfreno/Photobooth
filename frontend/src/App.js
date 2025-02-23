@@ -18,6 +18,24 @@ function App() {
         <Link to="/">Home</Link>
         <Link to="/privacy-policy">Privacy Policy</Link>
         <Link to="/contact">Contact</Link>
+
+        <form action="https://www.paypal.com/donate" method="post" target="_blank" className="paypal-form">
+         <a href="https://www.paypal.com/donate?hosted_button_id=VMLZHE6KGTZGQ" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          title="Support me with a donation!">
+
+        <img 
+              src="https://pics.paypal.com/00/s/YWRhODcwY2EtZWVhZC00OGY3LThhYTMtMzI1OWViYzIwYjUy/file.PNG" 
+              border="0" 
+              name="submit" 
+              alt="Donate with PayPal button"
+              className="paypal-button"
+            />
+          </a>
+
+          
+        </form>
       </nav>
   
       <Routes>
