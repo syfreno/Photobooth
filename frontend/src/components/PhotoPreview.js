@@ -251,15 +251,15 @@ const PhotoPreview = ({ capturedImages }) => {
 
   const sendPhotoStripToEmail = async () => {
     if (!email) {
-      setStatus("❗ Please enter a valid email address.");
+      setStatus("Please enter a valid email address.");
       return;
     }
   
     try {
-      setStatus("📤 Sending email...");
+      setStatus("Sending email...");
   
       if (!stripCanvasRef.current) {
-        setStatus("❌ Error: Canvas not ready");
+        setStatus(" Error: Canvas not ready");
         return;
       }
   
@@ -294,37 +294,46 @@ const PhotoPreview = ({ capturedImages }) => {
     <div className="photo-preview">
       <h2>Photo Strip Preview</h2>
 
-      <div className="color-options">
-        <button onClick={() => setStripColor("white")}>White</button>
-        <button onClick={() => setStripColor("black")}>Black</button>
-        <button onClick={() => setStripColor("#f6d5da")}>Pink</button>
-        <button onClick={() => setStripColor("#dde6d5")}>Green</button>
-        <button onClick={() => setStripColor("#adc3e5")}>Blue</button>
-        <button onClick={() => setStripColor("#FFF2CC")}>Yellow</button>
-        <button onClick={() => setStripColor("#dbcfff")}>Purple</button>
+      <div className="control-section">
+        <h3>Customize your photo strip</h3>
+
+        <p className="section-title">Frame Color</p>
+        <div className="color-options">
+          <button onClick={() => setStripColor("white")}>White</button>
+          <button onClick={() => setStripColor("black")}>Black</button>
+          <button onClick={() => setStripColor("#f6d5da")}>Pink</button>
+          <button onClick={() => setStripColor("#dde6d5")}>Green</button>
+          <button onClick={() => setStripColor("#adc3e5")}>Blue</button>
+          <button onClick={() => setStripColor("#FFF2CC")}>Yellow</button>
+          <button onClick={() => setStripColor("#dbcfff")}>Purple</button>
+        </div>
+
+        <p className="section-title">Stickers</p>
+        <div className="frame-options">
+          <button onClick={() => setSelectedFrame("none")}>No Stickers</button>
+          <button onClick={() => setSelectedFrame("pastel")}>Girlypop Stickers</button>
+          <button onClick={() => setSelectedFrame("cute")}>Cute Stickers</button>
+        </div>
       </div>
 
-      <div className="frame-options">
-        <button onClick={() => setSelectedFrame("pastel")}>Girlypop Stickers</button>
-        <button onClick={() => setSelectedFrame("cute")}>Cute Stickers</button>
-      </div>
+        <canvas ref={stripCanvasRef} className="photo-strip" />
 
-      <canvas ref={stripCanvasRef} className="photo-strip" />
+        <div className="control-section">
+          <div className="action-buttons">
+            <button onClick={downloadPhotoStrip}>📥 Download Photo Strip</button>
+            <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>
+          </div>
 
-      <div className="strip-buttons">
-        <button onClick={downloadPhotoStrip}>📥 Download Photo Strip</button>
-        <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>
-      </div>
-
-      <div className="email-section">
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button onClick={sendPhotoStripToEmail}>Send to Email</button>
-        <p>{status}</p>
+        <div className="email-section">
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <button onClick={sendPhotoStripToEmail}>Send to Email</button>
+          <p className="status-message">{status}</p>
+        </div>
       </div>
   </div>
   );
