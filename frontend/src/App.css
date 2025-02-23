@@ -408,7 +408,7 @@ button {
 .welcome-container {
   display: flex;
   flex-direction: column;
-  justify-content: center; 
+  justify-content: flex-start; 
   align-items: center;     
   text-align: center;
   height: 100vh;          
@@ -417,6 +417,7 @@ button {
 }
 
 .welcome-container h1 {
+  margin-bottom: 80px;
   font-size: 3rem;
   color: black;
   margin-bottom: 1rem;
