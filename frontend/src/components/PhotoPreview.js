@@ -265,7 +265,9 @@ const PhotoPreview = ({ capturedImages }) => {
   
       const imageData = stripCanvasRef.current.toDataURL("image/jpeg", 0.7); 
   
-      const response = await axios.post("http://localhost:5000/send-photo-strip", {
+      const backendURL = process.env.REACT_APP_BACKEND_URL;
+
+      const response = await axios.post(`${backendURL}/send-photo-strip`, {
         recipientEmail: email,
         imageData: imageData
       }, {
@@ -275,6 +277,7 @@ const PhotoPreview = ({ capturedImages }) => {
         maxContentLength: Infinity,
         maxBodyLength: Infinity
       });
+      
   
       console.log("Server response:", response.data);
   

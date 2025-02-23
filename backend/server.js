@@ -9,6 +9,7 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+
 const emailsDir = path.join(__dirname, "saved_emails");
 if (!fs.existsSync(emailsDir)) {
   fs.mkdirSync(emailsDir);
@@ -19,7 +20,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(cors({
-  origin: "http://localhost:3000", 
+  origin: ["http://localhost:3000, https://picapicaa.netlify.app/"], 
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
