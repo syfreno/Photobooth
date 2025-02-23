@@ -19,7 +19,10 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/send-message', formData);
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+      const res = await axios.post(`${BACKEND_URL}/send-message`, formData, {
+        withCredentials: true
+      });
       if (res.status === 200) {
         alert('Thank you for reaching out!');
       } else {
