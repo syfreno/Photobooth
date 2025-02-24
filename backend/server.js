@@ -115,6 +115,12 @@ app.post("/send-message", async (req, res) => {
 app.post("/send-photo-strip", async (req, res) => {
   const { recipientEmail, imageData } = req.body;
 
+  console.log("Attemping to send email to:", recipientEmail);
+  console.log("Environment variables check:", {
+    hasEmail: !!process.env.EMAIL,
+    hasEmailPass: !!process.env.EMAIL_PASS
+  });
+
   if (!recipientEmail || !imageData) {
     return res.status(400).json({ 
       success: false,

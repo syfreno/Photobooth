@@ -250,15 +250,46 @@ const PhotoPreview = ({ capturedImages }) => {
   };
 
   const sendPhotoStripToEmail = async () => {
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const blockedDomains = [
+      'mymail.lausd.net',
+      'lausd.net',
+      'domain@undefined',
+      'undefined',
+      '@undefined'
+    ];
+
     if (!email) {
       setStatus("Please enter a valid email address.");
+      return;
+    }
+
+    if (!email) {
+      setStatus("Please enter a valid email address.");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      setStatus("Please enter a valid email format. Example: name@emai.com");
+      return;
+    }
+
+    const domain = email.split('@')[1];
+    if (blockedDomains.includes(domain)) {
+      setStatus("This email domainis not supported. Please use a different email address.");
+      return;
+    }
+
+    if (email.includes('..') || email.includes('@@') || email.startsWith('.') || email.endsWith('.')) {
+      setStatus("Invalid email format. Please check your email address.");
       return;
     }
   
     try {
       setStatus("Sending email...");
       
-      // Log the backend URL being used
       console.log("Using backend URL:", process.env.REACT_APP_BACKEND_URL);
       
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/send-photo-strip`, {
