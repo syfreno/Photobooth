@@ -257,49 +257,38 @@ const PhotoPreview = ({ capturedImages }) => {
   
     try {
       setStatus("Sending email...");
-  
-      if (!stripCanvasRef.current) {
-        setStatus(" Error: Canvas not ready");
-        return;
-      }
-  
-      const imageData = stripCanvasRef.current.toDataURL("image/jpeg", 0.7); 
-  
-      const backendURL = process.env.REACT_APP_BACKEND_URL;
-
-      const response = await axios.post(`${backendURL}/send-photo-strip`, {
-        recipientEmail: email,
-        imageData: imageData
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
-      });
       
+      // Log the backend URL being used
+      console.log("Using backend URL:", process.env.REACT_APP_BACKEND_URL);
+      
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/send-photo-strip`, {
+        recipientEmail: email,
+        imageData: stripCanvasRef.current.toDataURL("image/jpeg", 0.7)
+      });
   
-      console.log("Server response:", response.data);
-  
-      if (response.data.message === "Photo strip sent successfully!") {
+      if (response.data.success) {
         setStatus("Photo Strip sent successfully!");
         setEmail("");
       } else {
-        setStatus("Failed to send Photo Strip.");
+        setStatus(`Failed to send: ${response.data.message}`);
       }
     } catch (error) {
-      console.error("Error details:", error.response || error);
-      setStatus(`Error: ${error.response?.data?.message || error.message}`);
+      console.error("Network Error Details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      setStatus(`Error: ${error.response?.data?.message || "Network error - please try again"}`);
     }
   };
-
+  
   return (
     <div className="photo-preview">
       <h2>Photo Strip Preview</h2>
-
+  
       <div className="control-section">
         <h3>Customize your photo strip</h3>
-
+  
         <p className="section-title">Frame Color</p>
         <div className="color-options">
           <button onClick={() => setStripColor("white")}>White</button>
@@ -310,7 +299,7 @@ const PhotoPreview = ({ capturedImages }) => {
           <button onClick={() => setStripColor("#FFF2CC")}>Yellow</button>
           <button onClick={() => setStripColor("#dbcfff")}>Purple</button>
         </div>
-
+  
         <p className="section-title">Stickers</p>
         <div className="frame-options">
           <button onClick={() => setSelectedFrame("none")}>No Stickers</button>
@@ -318,15 +307,15 @@ const PhotoPreview = ({ capturedImages }) => {
           <button onClick={() => setSelectedFrame("cute")}>Cute Stickers</button>
         </div>
       </div>
-
-        <canvas ref={stripCanvasRef} className="photo-strip" />
-
-        <div className="control-section">
-          <div className="action-buttons">
-            <button onClick={downloadPhotoStrip}>📥 Download Photo Strip</button>
-            <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>
-          </div>
-
+  
+      <canvas ref={stripCanvasRef} className="photo-strip" />
+  
+      <div className="control-section">
+        <div className="action-buttons">
+          <button onClick={downloadPhotoStrip}>📥 Download Photo Strip</button>
+          <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>
+        </div>
+  
         <div className="email-section">
           <input
             type="email"
@@ -338,7 +327,7 @@ const PhotoPreview = ({ capturedImages }) => {
           <p className="status-message">{status}</p>
         </div>
       </div>
-  </div>
+    </div>
   );
 };
 

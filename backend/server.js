@@ -116,10 +116,15 @@ app.post("/send-photo-strip", async (req, res) => {
   const { recipientEmail, imageData } = req.body;
 
   if (!recipientEmail || !imageData) {
-    return res.status(400).json({ message: "Missing recipientEmail or imageData" });
+    return res.status(400).json({ 
+      success: false,
+      message: "Missing email or image data" 
+    });
   }
 
   try {
+    console.log("Attempting to send email to:", recipientEmail);
+    
     const transporter = nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -134,41 +139,35 @@ app.post("/send-photo-strip", async (req, res) => {
       }
     });
 
-    transporter.verify(function(error, success) {
-      if (error) {
-        console.error("Email verification failed:", error);
-      } else {
-        console.log("Email server is ready");
-      }
-    });
+    // Verify transporter
+    await transporter.verify();
+    console.log("Email transporter verified successfully");
 
     const mailOptions = {
       from: process.env.EMAIL,
       to: recipientEmail,
       subject: "Your Photo Strip 🎉",
       text: "Thanks for using Picapica!",
-      attachments: [
-        {
-          filename: "photo-strip.png",
-          content: imageData.split("base64,")[1], 
-          encoding: "base64"
-        }
-      ]
+      attachments: [{
+        filename: "photo-strip.png",
+        content: imageData.split("base64,")[1],
+        encoding: "base64"
+      }]
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully to:", recipientEmail);
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
 
-    res.status(200).json({ 
+    res.status(200).json({
       success: true,
       message: "Photo strip sent successfully!"
     });
   } catch (error) {
-    console.error("Error sending photo strip:", error);
-    res.status(500).json({ 
+    console.error("Email sending error:", error);
+    res.status(500).json({
       success: false,
-      message: "Failed to send photo strip", 
-      error: error.message 
+      message: error.message || "Failed to send email",
+      error: error.toString()
     });
   }
 });
