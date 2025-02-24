@@ -28,6 +28,11 @@ body {
   z-index: 1000;
 }
 
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
 .navbar a {
   text-decoration: none;
   color: #333;
@@ -45,6 +50,43 @@ body {
 .navbar a:active {
   background: none !important;
   color: white;
+}
+
+.hamburger {
+  display: none;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 1100;
+}
+
+.hamburger .bar {
+  width: 25px;
+  height: 3px;
+  background-color: #333;
+  transition: all 0.3s ease;
+}
+
+.hamburger.open .bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.hamburger.open .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.open .bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 999;
 }
 
 .main-content {
@@ -770,6 +812,29 @@ footer a:hover {
     font-size: 1rem;
   }
 
+  .hamburger {
+    display: flex;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    height: 100vh;
+    width: 250px;
+    background-color: #fff;
+    flex-direction: column;
+    gap: 20px;
+    padding: 60px 20px;
+    transition: right 0.3s ease-in-out;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .nav-links.open {
+    right: 0;
+  }
+
   .navbar {
     flex-wrap: wrap;
     gap: 20px;
@@ -777,9 +842,26 @@ footer a:hover {
   }
 
   .navbar a {
-    padding: 10px;
+    padding: 12px 0;
     font-size: 1rem;
     background: none !important;
+    border-bottom: 1px solid #ddd;
+
+  }
+
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+  }
+
+  .overlay.show {
+    display: block;
   }
 
   .contact-form {
@@ -788,11 +870,7 @@ footer a:hover {
     margin: 20px auto;
   }
 
-  .nav-links {
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 10px;
-  }
+
 
 
 
