@@ -19,13 +19,15 @@ const Home = () => {
         >START</button>
 
         <footer className="mt-8 text-sm text-gray-600">
-          made by{" "}
-          <a
-            href="https://agneswei.com" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            style={{ color: "pink", textDecoration: "none" }}>agneswei</a>
-             <p>© 2025 Agnes Wei. All Rights Reserved.</p>
+          <p>
+            made by{" "}
+            <a
+              href="https://agneswei.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ color: "pink", textDecoration: "none" }}>agneswei</a>
+            </p>
+            <p>© 2025 Agnes Wei. All Rights Reserved.</p>
         </footer>
       </div>
     </div>
