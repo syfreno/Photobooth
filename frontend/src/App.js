@@ -1,5 +1,5 @@
 import "./App.css";
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";  
 import Home from "./components/Home";
 import Welcome from "./components/Welcome";
@@ -17,58 +17,34 @@ function App() {
     setIsMobileNavOpen(!isMobileNavOpen);
   }
 
+  const closeMobileNav = () => {
+    setIsMobileNavOpen(!isMobileNavOpen);
+  }
+
   return (
     <div className="App">
       <nav className="navbar">
-        <Link to="/">Home</Link>
-        <Link to="/privacy-policy">Privacy Policy</Link>
-        <Link to="/contact">Contact</Link>
-        <Link to="/" className="logo">Picapica</Link>
+        <Link to="/" className="logo">picapica</Link>
 
+        {/* Hamburger Icon (Mobile Only) */}
         <div className={`hamburger ${isMobileNavOpen ? "open" : ""}`} onClick={toggleMobileNav}>
-           <div className= "bar"></div>
-           <div className= "bar"></div>
-           <div className= "bar"></div>
+          <div className="bar"></div>
+          <div className="bar"></div>
+          <div className="bar"></div>
         </div>
-        
+
+        {/* Navigation Links */}
         <div className={`nav-links ${isMobileNavOpen ? "open" : ""}`}>
-          <Link to="/" onClick={toggleMobileNav}>Home</Link>
-          <Link to="/privacy-policy" onClick={toggleMobileNav}>Privacy Policy</Link>
-          <Link to="/contact" onClick={toggleMobileNav}>Contact</Link>
-
-          {/* PayPal Button */}
-          <form action="https://www.paypal.com/donate" method="post" target="_blank" className="paypal-form">
-            <a href="https://www.paypal.com/donate?hosted_button_id=VMLZHE6KGTZGQ"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Support me with a donation!">
-              <img
-                src="https://pics.paypal.com/00/s/YWRhODcwY2EtZWVhZC00OGY3LThhYTMtMzI1OWViYzIwYjUy/file.PNG"
-                alt="Donate with PayPal button"
-                className="paypal-button"
-              />
-            </a>
-          </form>
+          <Link to="/" onClick={closeMobileNav}>Home</Link>
+          <Link to="/privacy-policy" onClick={closeMobileNav}>Privacy Policy</Link>
+          <Link to="/contact" onClick={closeMobileNav}>Contact</Link>
         </div>
 
-
-        <form action="https://www.paypal.com/donate" method="post" target="_blank" className="paypal-form">
-         <a href="https://www.paypal.com/donate?hosted_button_id=VMLZHE6KGTZGQ" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          title="Support me with a donation!">
-
-        <img 
-              src="https://pics.paypal.com/00/s/YWRhODcwY2EtZWVhZC00OGY3LThhYTMtMzI1OWViYzIwYjUy/file.PNG" 
-              border="0" 
-              name="submit" 
-              alt="Donate with PayPal button"
-              className="paypal-button"
-            />
-          </a> 
-        </form>
+        {/* Overlay (closes the menu when clicked outside) */}
+        {isMobileNavOpen && <div className="overlay show" onClick={closeMobileNav}></div>}
       </nav>
-  
+
+      {/* App Routes */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/welcome" element={<Welcome />} />

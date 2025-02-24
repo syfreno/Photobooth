@@ -28,6 +28,7 @@ body {
   z-index: 1000;
 }
 
+/* default nav links on desktop */
 .nav-links {
   display: flex;
   gap: 20px;
@@ -52,6 +53,7 @@ body {
   color: white;
 }
 
+/* hidden by default (show on mobile) */
 .hamburger {
   display: none;
   cursor: pointer;
@@ -80,6 +82,7 @@ body {
 }
 
 .overlay {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -87,6 +90,10 @@ body {
   height: 100vh;
   background: rgba(0, 0, 0, 0.4);
   z-index: 999;
+}
+
+.overlay.show {
+  display: block;
 }
 
 .main-content {
@@ -817,9 +824,14 @@ footer a:hover {
   }
 
   .nav-links {
+    display: none;
+  }
+
+  .nav-links.open {
+    display: flex;
     position: fixed;
     top: 0;
-    right: -250px;
+    right: 0;
     height: 100vh;
     width: 250px;
     background-color: #fff;
@@ -831,8 +843,10 @@ footer a:hover {
     z-index: 1000;
   }
 
-  .nav-links.open {
-    right: 0;
+  .nav-links a {
+    font-size: 1.2rem;
+    padding: 12px 0;
+    border-bottom: 1px solid #ddd;
   }
 
   .navbar {
