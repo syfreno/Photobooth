@@ -47,6 +47,10 @@ body {
   color: white;
 }
 
+.main-content {
+  margin-top: 60px;
+}
+
 .paypal-form {
   position: relative;
   display: inline-block;
