@@ -24,7 +24,7 @@ function App() {
   return (
     <div className="App">
       <nav className="navbar">
-        <Link to="/" className="logo">picapica</Link>
+        <Link to="/" className="logo" onClick={closeMobileNav}></Link>
 
         {/* Navigation Links */}
         <div className={`nav-links ${isMobileNavOpen ? "open" : ""}`}>

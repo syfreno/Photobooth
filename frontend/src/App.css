@@ -10,34 +10,43 @@ body {
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 153, 178, 0.5) 20%,
+    rgba(255, 240, 245, 0.9) 40%,
+    rgba(255, 250, 250, 1) 70%);
 }
 
 .navbar {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 15px;
   padding: 8px 10px;
-  background-color: rgba(255, 255, 255, 0.9) !important; 
-  border-bottom: 2px solid #ddd;
-  position: fixed;
+  background: none !important;
+  border-bottom: none;
+  position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   z-index: 1000;
 }
 
 .App {
-  padding-top: 60px;
+  padding-top: 0px;
+  margin-top: 0;
 }
 
 /* default nav links on desktop */
 .nav-links {
   display: flex;
   gap: 20px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 25px;
+  padding: 5px 15px;
 }
 
 .navbar a {
@@ -45,13 +54,13 @@ body {
   color: #333;
   font-weight: bold;
   padding: 8px 16px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   background: none !important;
 }
 
 .navbar a:hover {
+  color: #afcaa6;
   background: none !important;
-  border-radius: 20px;
 }
 
 .navbar a:active {
@@ -103,7 +112,8 @@ body {
 }
 
 .main-content {
-  margin-top: 60px;
+  margin-top: 0px;
+  padding-top: 0;
 }
 
 .paypal-form {
@@ -147,6 +157,8 @@ body {
 .background-gradient {
   width: 100%;
   height: 100vh;
+  margin: 0;
+  padding: 0;
   background: radial-gradient(
     circle at center,
     rgba(255, 153, 178, 0.5) 20%,
@@ -159,7 +171,7 @@ body {
   animation: pulse 5s infinite alternate ease-in-out;
   background-repeat: no-repeat;
   background-position: center;
-  padding: 20px;
+  background-size: cover;
 }
 
 
@@ -298,6 +310,11 @@ body {
   border-radius: 0px; 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 150px;
+  max-width: 300px;
+  height: auto;
+  display: block;
+  margin: 10px auto;
 }
 
 .photobooth-strip:hover {
@@ -399,13 +416,6 @@ body {
   align-items: center;
   gap: 20px;
 }
-
-button {
-  margin: 10px;
-  padding: 12px 20px;
-}
-
-
 
 /* Animation */
 .animate {
@@ -606,6 +616,7 @@ button {
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
+  margin: 10px 0;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
@@ -623,7 +634,7 @@ button:disabled {
 
 button:hover {
   background: linear-gradient(135deg, #ffc0cb, #ea909f) !important;
-  color: white !important;
+  color: white;
   transform: scale(1.05);
 }
 
@@ -688,7 +699,7 @@ footer {
   text-align: center;
   font-size: 0.8rem;
   font-weight: bold;
-  margin-top: 60px;
+  margin-top: 30px;
   margin-bottom: 20px;
   position: relative;
   bottom: 0;
@@ -697,7 +708,7 @@ footer {
 
 
 footer p:first-of-type {
-  margin-bottom: 15px;  /* Space between "made by" and copyright */
+  margin-bottom: 15px;  
 }
 
 /* Footer Link */
@@ -730,8 +741,9 @@ footer a:hover {
   align-items: center;
   text-align: center;
   min-height: 100vh;
-  padding: 20px;
-  min-height: calc(100vh - 80px);
+  width: 100%;
+  padding: 0 20px;
+  margin: 0;
 }
 
 @keyframes titlePulse {
@@ -844,13 +856,21 @@ footer a:hover {
     right: 0;
     height: 100vh;
     width: 250px;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.95);;
     flex-direction: column;
     gap: 20px;
     padding: 60px 20px;
     transition: right 0.3s ease-in-out;
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
     z-index: 1000;
+  }
+
+  .nav-links.open a {
+    font-size: 1.2rem;
+    padding: 12px 0;
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+    text-align: left;
   }
 
   .nav-links a {
@@ -860,10 +880,10 @@ footer a:hover {
   }
 
   .navbar {
-    padding: 10px;
-    flex-wrap: wrap;
-    gap: 20px;
+    padding: 5px;
     background: none !important;
+    justify-content: flex-end;
+    padding-right: 40px;
   }
 
   .navbar a {
@@ -903,6 +923,11 @@ footer a:hover {
     width: 90%;
     padding: 15px;
     margin: 20px auto;
+  }
+
+  .photobooth-strip {
+    width: 130px;
+    margin: 5px auto;
   }
 
 
