@@ -15,8 +15,9 @@ const Home = () => {
           
         <img src="/photobooth-strip.png" alt="photobooth strip" className="photobooth-strip"/>
         
-        <button onClick={() => navigate("/welcome")} className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition"
-        >START</button>
+        <button onClick={() => navigate("/welcome")} className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition">
+          START
+        </button>
 
         <footer className="mt-8 text-sm text-gray-600">
           <p>
@@ -25,7 +26,9 @@ const Home = () => {
               href="https://agneswei.com" 
               target="_blank" 
               rel="noopener noreferrer" 
-              style={{ color: "pink", textDecoration: "none" }}>agneswei</a>
+              style={{ color: "pink", textDecoration: "none" }}>
+              agneswei
+              </a>
             </p>
             <p>© 2025 Agnes Wei. All Rights Reserved.</p>
         </footer>

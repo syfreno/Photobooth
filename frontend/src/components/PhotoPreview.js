@@ -252,9 +252,86 @@ const PhotoPreview = ({ capturedImages }) => {
   };
 
   const sendPhotoStripToEmail = async () => {
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+    // Clear previous status
+    setStatus("");
+    
+    // Comprehensive email validation
+    const validateEmail = (email) => {
+      // Basic format check
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) return false;
+      
+      // Common typos and issues
+      if (email.includes('..') || email.endsWith('.') || email.startsWith('.')) return false;
+      if (email.includes('@@') || email.startsWith('@')) return false;
+      
+      // Length checks
+      if (email.length < 5 || email.length > 254) return false;
+      
+      // Domain part checks
+      const [localPart, domain] = email.split('@');
+      if (!domain || domain.length < 3) return false;
+      if (!domain.includes('.')) return false;
+      
+      // Local part length check
+      if (localPart.length > 64) return false;
+      
+      // TLD validation (must be at least 2 characters)
+      const tld = domain.split('.').pop();
+      if (!tld || tld.length < 2) return false;
+      
+      return true;
+    };
+  
+    // List of commonly mistyped domains and their corrections
+    const commonMisspellings = {
+      'gmail.co': 'gmail.com',
+      'gmail.cm': 'gmail.com',
+      'gmai.com': 'gmail.com',
+      'gmial.com': 'gmail.com',
+      'gamil.com': 'gmail.com',
+      'yahoo.co': 'yahoo.com',
+      'yahooo.com': 'yahoo.com',
+      'hotmail.co': 'hotmail.com',
+      'hotmial.com': 'hotmail.com',
+      'outloo.com': 'outlook.com',
+      'outlok.com': 'outlook.com'
+    };
+  
+    // Check and suggest corrections for common email misspellings
+    const checkForTypos = (email) => {
+      const [localPart, domain] = email.split('@');
+      if (commonMisspellings[domain]) {
+        return {
+          hasTypo: true,
+          suggestion: `${localPart}@${commonMisspellings[domain]}`
+        };
+      }
+      return { hasTypo: false };
+    };
+  
+    if (!email) {
+      setStatus("Please enter an email address.");
+      return;
+    }
+  
+    // Check for common typos
+    const typoCheck = checkForTypos(email);
+    if (typoCheck.hasTypo) {
+      if (confirm(`Did you mean ${typoCheck.suggestion}?`)) {
+        setEmail(typoCheck.suggestion);
+        // Continue with the corrected email
+      } else {
+        // User declined correction, continue with validation
+      }
+    }
+  
+    if (!validateEmail(email)) {
+      setStatus("Please enter a valid email address. Example: name@example.com");
+      return;
+    }
+  
+    // Blocked domains validation
     const blockedDomains = [
       'mymail.lausd.net',
       'lausd.net',
@@ -262,45 +339,26 @@ const PhotoPreview = ({ capturedImages }) => {
       'undefined',
       '@undefined'
     ];
-
-    if (!email) {
-      setStatus("Please enter a valid email address.");
-      return;
-    }
-
-    if (!email) {
-      setStatus("Please enter a valid email address.");
-      return;
-    }
-
-    if (!emailRegex.test(email)) {
-      setStatus("Please enter a valid email format. Example: name@emai.com");
-      return;
-    }
-
+  
     const domain = email.split('@')[1];
-    if (blockedDomains.includes(domain)) {
-      setStatus("This email domainis not supported. Please use a different email address.");
-      return;
-    }
-
-    if (email.includes('..') || email.includes('@@') || email.startsWith('.') || email.endsWith('.')) {
-      setStatus("Invalid email format. Please check your email address.");
+    if (blockedDomains.includes(domain) || domain.includes('undefined')) {
+      setStatus("This email domain is not supported. Please use a different email address.");
       return;
     }
   
     try {
       setStatus("Sending email...");
       
-      console.log("Using backend URL:", process.env.REACT_APP_BACKEND_URL);
+      // Add a delay to prevent rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/send-photo-strip`, {
-        recipientEmail: email,
+        recipientEmail: email.trim(), // Trim to remove any accidental spaces
         imageData: stripCanvasRef.current.toDataURL("image/jpeg", 0.7)
       });
   
       if (response.data.success) {
-        setStatus("Photo Strip sent successfully!");
+        setStatus("Photo Strip sent successfully! Please check your inbox (and spam folder).");
         setEmail("");
       } else {
         setStatus(`Failed to send: ${response.data.message}`);
@@ -311,7 +369,15 @@ const PhotoPreview = ({ capturedImages }) => {
         response: error.response?.data,
         status: error.response?.status
       });
-      setStatus(`Error: ${error.response?.data?.message || "Network error - please try again"}`);
+      
+      // More user-friendly error messages
+      if (error.response?.status === 400) {
+        setStatus(`Error: ${error.response.data.message || "Invalid email address"}`);
+      } else if (error.message.includes("Network Error")) {
+        setStatus("Network connection error. Please check your internet connection and try again.");
+      } else {
+        setStatus(`Error: ${error.response?.data?.message || "Failed to send. Please try again later."}`);
+      }
     }
   };
   

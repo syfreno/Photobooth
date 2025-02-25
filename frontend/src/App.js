@@ -18,20 +18,13 @@ function App() {
   }
 
   const closeMobileNav = () => {
-    setIsMobileNavOpen(!isMobileNavOpen);
+    setIsMobileNavOpen(false);
   }
 
   return (
     <div className="App">
       <nav className="navbar">
         <Link to="/" className="logo">picapica</Link>
-
-        {/* Hamburger Icon (Mobile Only) */}
-        <div className={`hamburger ${isMobileNavOpen ? "open" : ""}`} onClick={toggleMobileNav}>
-          <div className="bar"></div>
-          <div className="bar"></div>
-          <div className="bar"></div>
-        </div>
 
         {/* Navigation Links */}
         <div className={`nav-links ${isMobileNavOpen ? "open" : ""}`}>
@@ -40,19 +33,28 @@ function App() {
           <Link to="/contact" onClick={closeMobileNav}>Contact</Link>
         </div>
 
+        {/* Hamburger Icon (Mobile Only) */}
+        <div className={`hamburger ${isMobileNavOpen ? "open" : ""}`} onClick={toggleMobileNav}>
+          <div className="bar"></div>
+          <div className="bar"></div>
+          <div className="bar"></div>
+        </div>
+
         {/* Overlay (closes the menu when clicked outside) */}
         {isMobileNavOpen && <div className="overlay show" onClick={closeMobileNav}></div>}
       </nav>
 
-      {/* App Routes */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/welcome" element={<Welcome />} />
-        <Route path="/photobooth" element={<PhotoBooth setCapturedImages={setCapturedImages} />} />
-        <Route path="/preview" element={<PhotoPreview capturedImages={capturedImages} />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/contact" element={<Contact />} />
-      </Routes>
+      <div className="main-content">
+        {/* App Routes */}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/photobooth" element={<PhotoBooth setCapturedImages={setCapturedImages} />} />
+          <Route path="/preview" element={<PhotoPreview capturedImages={capturedImages} />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/contact" element={<Contact />} />
+        </Routes>
+      </div>
     </div>
   );
 }
