@@ -10,6 +10,7 @@ const Contact = () => {
   });
 
   const [status, setStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,20 +19,43 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setStatus('Sending message...');
     try {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
-      const res = await axios.post(`${BACKEND_URL}/send-message`, formData, {
-        withCredentials: true
-      });
-      if (res.status === 200) {
-        alert('Thank you for reaching out!');
-      } else {
-        alert('Something went wrong. Please try again.');
+      console.log("Sending to backend URL:", BACKEND_URL);
+      
+      if (!formData.name || !formData.email || !formData.message) {
+        setStatus('Please fill in all fields');
+        setIsSubmitting(false);
+        return;
       }
-      setFormData({ name: '', email: '', message: '' });
+      
+      const res = await axios.post(`${BACKEND_URL}/send-message`, formData, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: false
+      });
+      
+      if (res.status === 200) {
+        setStatus('Thank you for reaching out! Your message has been sent.');
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        setStatus('Something went wrong. Please try again.');
+      }
     } catch (err) {
-      console.error("Error:", err.response?.data || err.message);
-      alert(`Failed to send message: ${err.response?.data?.message || err.message}`);
+      console.error("Error details:", err);
+      
+      if (err.message === 'Network Error') {
+        setStatus('Cannot connect to the server. Please check if the backend is running or try again later.');
+      } else if (err.response) {
+        setStatus(`Error: ${err.response.data.message || 'Server error, please try again'}`);
+      } else {
+        setStatus(`Failed to send message: ${err.message}`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -65,9 +89,14 @@ const Contact = () => {
             ></textarea>
             <button type="submit">Send Message</button>
         </form>
-        {status && <p>{status}</p>}
-        </div>
+        {status && <p className="status-message">{status}</p>}
+          <div style={{ marginTop: '20px', fontSize: '0.9rem', textAlign: 'center' }}>
+            <p>If you're having trouble with the contact form, you can also reach me directly at:</p>
+            <p style={{ fontWeight: 'bold', marginTop: '5px' }}>agnes@picapicabooth.com</p>
+          </div>
+      </div>
     </div>
+    
   );
 };
 

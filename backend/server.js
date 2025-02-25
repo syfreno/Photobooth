@@ -4,6 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
+const { log } = require("console");
 require("dotenv").config();
 
 const app = express();
@@ -29,7 +30,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cors({
   origin: ["http://localhost:3000", "https://picapicaa.netlify.app"], 
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
 
 app.use(express.static("uploads"));
@@ -161,52 +163,125 @@ app.post("/send-message", async (req, res) => {
 
   console.log("Incoming message:", { name, email, message });
 
-  if (!validateEmail(email)) {
-    return res.status(400).json({ message: "Invalid email format" });
+  const logDir = path.join(__dirname, "email_logs");
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir);
   }
 
+  const logRequest = {
+    timestamp: new Date().toISOString(),
+    sender: email,
+    name,
+    messagePreview: message.substring(0, 50) + (message.length > 50 ? "..." : "")
+  };
+  
+  fs.writeFileSync(
+    path.join(logDir, `request_${Date.now()}.json`), 
+    JSON.stringify(logRequest, null, 2)
+  );
+
   try {
-    const transporter = createTransporter();
+    console.log("Testing email credentials...");
+    console.log("Using email:", process.env.EMAIL);
+    console.log("Password length:", process.enc.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0);
+    
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      },
+      // Add these options for better reliability
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+      debug: true // Enable debug output
+    });
     
     // Verify connection
     await transporter.verify();
-    console.log("Email server is ready for contact form");
+    console.log("Email server is ready");
 
+    const formattedFrom = name ? `"${name}" <${email}>` : email;
+    
     const mailOptions = {
-      from: `"${name}" <${process.env.EMAIL}>`,
+      from: formattedFrom,
       to: process.env.EMAIL,
       subject: `New Message from ${name}`,
       text: `Email: ${email}\n\nMessage:\n${message}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>New Contact Form Message</h2>
-          <p><strong>From:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Message:</strong></p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-            ${message.replace(/\n/g, '<br>')}
-          </div>
-        </div>
-      `
+      replyTo: email
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Contact email sent:", info.response);
+    const sendWithRetry = async (attempts = 3, delay = 1000) => {
+      try {
+        return await transporter.sendMail(mailOptions);
+      } catch (error) {
+        if (attempts <= 1) throw error;
+        console.log(`Email send failed, retrying... (${attempts-1} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return sendWithRetry(attempts - 1, delay * 1.5);
+      }
+    };
+
+    const info = await sendWithRetry();
+    console.log("Email sent:", info.response);
     
     // Log successful email
-    logEmailAttempt(process.env.EMAIL, true, info.messageId);
+    const logSuccess = {
+      timestamp: new Date().toISOString(),
+      sender: email,
+      status: "success",
+      messageId: info.messageId,
+      response: info.response
+    };
+
+    fs.writeFileSync(
+      path.join(logDir, `success_${Date.now()}.json`), 
+      JSON.stringify(logSuccess, null, 2)
+    );
 
     res.status(200).json({ message: "Email sent successfully" });
   } catch (error) {
-    console.error("Error sending contact email:", error);
+    console.error("Error sending email:", error);
     
     // Log failed email
-    logEmailAttempt(process.env.EMAIL, false, null, {
-      code: error.code,
-      message: error.message
-    });
+    const logError = {
+      timestamp: new Date().toISOString(),
+      sender: email,
+      status: "error",
+      errorCode: error.code || "unknown",
+      errorMessage: error.message,
+      stack: error.stack
+    };
     
-    res.status(500).json({ message: "Failed to send email", error: error.message });
+    fs.writeFileSync(
+      path.join(logDir, `error_${Date.now()}.json`), 
+      JSON.stringify(logError, null, 2)
+    );
+
+    // Save the failed message for later processing
+    const failedEmail = {
+      timestamp: new Date().toISOString(),
+      name,
+      email,
+      message
+    };
+    
+    fs.writeFileSync(
+      path.join(__dirname, "saved_emails", `failed_${Date.now()}.json`), 
+      JSON.stringify(failedEmail, null, 2)
+    );
+
+    res.status(500).json({ 
+      message: "Failed to send email. Your message has been saved and we'll try to process it later.", 
+      error: error.message 
+    });
   }
 });
 
