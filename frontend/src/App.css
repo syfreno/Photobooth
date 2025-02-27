@@ -373,6 +373,17 @@ body {
   position: relative;
 }
 
+/* Camera Container Group */
+.camera-container-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 600px;
+  max-width: 700px;
+  height: 450px;
+  position: relative;
+}
+
 .filter-prompt {
   text-align: center;
   margin: 20px 0 15px 0;
@@ -396,6 +407,18 @@ body {
 .video-feed {
   width: 600px;
   height: 450px;
+  object-fit: cover; 
+  transform: scaleX(-1); 
+  border-radius: 12px;
+  border: 3px solid black;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+}
+
+/* live cam group*/
+.video-feed-group {
+  width: 800px;
+  height: 400px;
   object-fit: cover; 
   transform: scaleX(-1); 
   border-radius: 12px;
@@ -511,6 +534,28 @@ body {
   outline: none;
 }
 
+.name-section {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.name-section input {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 25px;
+  margin-bottom: 15px;
+  transition: border-color 0.3s ease;
+}
+
+.name-section input:focus {
+  border-color: #bdd0b7;
+  outline: none;
+}
+
 .status-message {
   margin-top: 10px;
   text-align: center;
@@ -538,6 +583,27 @@ body {
   margin-bottom: 5px;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+
+}
+
+/* Improve photo group strip display */
+.photo-strip-group {
+  margin: 30px auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fix Photo Group Strip Squishing */
+.photo-strip-group {
+  display: block;
+  /* max-width: 400px;
+  width: 100%; 
+  height: auto;
+  margin-top: -10px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); */
 
 }
 
@@ -660,7 +726,19 @@ button:active {
   gap: 30px; 
   width: 100%;
   max-width: 1200px;
-  margin: 20px auto;
+  margin: 0px 0px 20px 180px;
+}
+
+/* Fix Layout Between Camera and Photo Strip For Group*/
+.photo-container-group {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px; 
+  width: 100%;
+  max-width: 1200px;
+  margin: 0px 0px 20px 180px;
 }
 
 /* Fix Photo Strip Thumbnails */
@@ -674,10 +752,30 @@ button:active {
   margin-top: -120px; 
 }
 
-
 .side-preview {
   width: 160px;
   height: 120px;
+  object-fit: cover; 
+  border-radius: 0px;
+  border: 1px solid #000;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  margin-bottom: 10px;
+}
+
+/* Fix Photo Group Strip Thumbnails */
+.preview-side-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  min-width: 120px;
+  margin-left: 20px;
+  margin-top: -120px; 
+}
+
+.side-preview-group {
+  width: 200px;
+  height: 100px;
   object-fit: cover; 
   border-radius: 0px;
   border: 1px solid #000;
@@ -762,7 +860,7 @@ footer a:hover {
 }
 
 /* Fix Horizontal Scrolling Issue */
-.container, .navbar, .photo-container, .camera-container {
+.container, .navbar, .photo-container, .photo-container-group, .camera-container {
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -788,6 +886,32 @@ footer a:hover {
 }
 
 .email-section p {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* name */
+.name-section {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 250px;  /* Added max-width for better layout */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.name-section input {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 2px solid #000;
+  border-radius: 25px;
+  outline: none;
+}
+
+.name-section p {
   margin-top: 10px;
   font-size: 14px;
   color: #333;

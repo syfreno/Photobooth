@@ -1,0 +1,51 @@
+[
+  {
+    "timestamp": "2025-02-26T13:46:15.376Z",
+    "recipient": "ehsanimran3599@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Invalid login: 454-4.7.0 Too many login attempts, please try again later. For more information,\\n454-4.7.0 go to\\n454 4.7.0  https://support.google.com/mail/answer/7126229 d9443c01a7336-22325914182sm13308485ad.224 - gsmtp\",\"type\":\"test_email\"}"
+  },
+  {
+    "timestamp": "2025-02-26T13:46:43.703Z",
+    "recipient": "ios.imrannn@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Invalid login: 454-4.7.0 Too many login attempts, please try again later. For more information,\\n454-4.7.0 go to\\n454 4.7.0  https://support.google.com/mail/answer/7126229 98e67ed59e1d1-2fe825a98e7sm1495802a91.4 - gsmtp\",\"type\":\"test_email\"}"
+  },
+  {
+    "timestamp": "2025-02-26T14:05:48.318Z",
+    "recipient": "ehsanimran3599@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Missing credentials for \\\"PLAIN\\\"\",\"type\":\"test_email\"}"
+  },
+  {
+    "timestamp": "2025-02-26T14:06:58.573Z",
+    "recipient": "ehsanimran3599@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Missing credentials for \\\"PLAIN\\\"\",\"type\":\"test_email\"}"
+  },
+  {
+    "timestamp": "2025-02-26T14:08:34.491Z",
+    "recipient": "ehsanimran3599@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Missing credentials for \\\"PLAIN\\\"\",\"type\":\"test_email\"}"
+  },
+  {
+    "timestamp": "2025-02-26T14:11:58.438Z",
+    "recipient": "ehsanimran3599@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Missing credentials for \\\"PLAIN\\\"\",\"type\":\"test_email\"}"
+  },
+  {
+    "timestamp": "2025-02-26T14:13:10.884Z",
+    "recipient": "ios.imrannn@gmail.com",
+    "success": false,
+    "messageId": null,
+    "errorDetails": "{\"code\":\"EAUTH\",\"message\":\"Missing credentials for \\\"PLAIN\\\"\",\"type\":\"test_email\"}"
+  }
+]

@@ -14,7 +14,8 @@ const Welcome = () => {
       <p>
         After the session, <span style={{ color: "pink" }}></span> download your digital copy and share the fun!
       </p>
-      <button onClick={() => navigate("/photobooth")}>START</button>
+      <button onClick={() => navigate("/photobooth")}>COUPLES</button>
+      <button onClick={() => navigate("/photobooth-group")}>GROUPS</button>
     </div>
   );
 };

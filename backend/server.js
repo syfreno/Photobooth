@@ -8,6 +8,7 @@ const { log } = require("console");
 require("dotenv").config();
 
 const app = express();
+app.use(express.json({ limit: '10mb' })); // To handle large image data
 const PORT = process.env.PORT || 5000;
 
 // Create necessary directories
@@ -28,7 +29,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(cors({
-  origin: ["http://localhost:3000", "https://picapicaa.netlify.app"], 
+  origin: ["http://localhost:3000"], 
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -72,7 +73,7 @@ const createTransporter = () => {
     secure: false,
     auth: {
       user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS
+      pass: process.env.EMAIL_APP_PASS
     },
     tls: {
       rejectUnauthorized: false
@@ -454,7 +455,7 @@ app.get("/test-email", async (req, res) => {
       secure: false,
       auth: {
         user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_APP_PASS
       },
       tls: {
         rejectUnauthorized: false

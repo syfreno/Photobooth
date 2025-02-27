@@ -130,7 +130,7 @@ const frames = {
   }
 };
 
-const PhotoPreview = ({ capturedImages }) => {
+const PhotoPreviewGroup = ({ capturedImagesGroup }) => {
   const stripCanvasRef = useRef(null);
   const navigate = useNavigate();
   const [stripColor, setStripColor] = useState("white");
@@ -145,8 +145,8 @@ const PhotoPreview = ({ capturedImages }) => {
     const ctx = canvas.getContext("2d");
 
   
-    const imgWidth = 400;  
-    const imgHeight = 300; 
+    const imgWidth = 650;  
+    const imgHeight = 250; 
     const borderSize = 40;  
     const photoSpacing = 20;  
     const textHeight = 50;  
@@ -159,7 +159,7 @@ const PhotoPreview = ({ capturedImages }) => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     let imagesLoaded = 0;
-    capturedImages.forEach((image, index) => {
+    capturedImagesGroup.forEach((image, index) => {
       const img = new Image();
       img.src = image;
       img.onload = () => {
@@ -199,7 +199,7 @@ const PhotoPreview = ({ capturedImages }) => {
         
         imagesLoaded++;
 
-        if (imagesLoaded === capturedImages.length) {
+        if (imagesLoaded === capturedImagesGroup.length) {
           const now = new Date();
           const timestamp = now.toLocaleDateString('en-US', {
             month: '2-digit',
@@ -233,15 +233,15 @@ const PhotoPreview = ({ capturedImages }) => {
         }
       };
     });
-  }, [capturedImages, stripColor, selectedFrame]);
+  }, [capturedImagesGroup, stripColor, selectedFrame]);
 
   useEffect(() => {
-    if (capturedImages.length === 4) {
+    if (capturedImagesGroup.length === 4) {
       setTimeout(() => {
         generatePhotoStrip();
       }, 100);
     }
-  }, [capturedImages, stripColor, selectedFrame, generatePhotoStrip]);
+  }, [capturedImagesGroup, stripColor, selectedFrame, generatePhotoStrip]);
 
   const downloadPhotoStrip = () => {
     const fileName = name.trim() ? `${name.trim()}_photostrip.png` : `photostrip.png`;
@@ -408,11 +408,11 @@ const PhotoPreview = ({ capturedImages }) => {
         </div>
       </div>
   
-      <canvas ref={stripCanvasRef} className="photo-strip" />
+      <canvas ref={stripCanvasRef} className="photo-strip-group" />
   
       <div className="control-section">
         <div className="action-buttons">
-          <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>
+          <button onClick={() => navigate("/photobooth-group")}>🔄 Take New Photos</button>
           <button onClick={() => navigate("/")}>Home</button>
         </div>
   
@@ -443,4 +443,4 @@ const PhotoPreview = ({ capturedImages }) => {
   );
 };
 
-export default PhotoPreview;
+export default PhotoPreviewGroup;

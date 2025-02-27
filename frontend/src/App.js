@@ -4,13 +4,16 @@ import { Routes, Route, Link } from "react-router-dom";
 import Home from "./components/Home";
 import Welcome from "./components/Welcome";
 import PhotoBooth from "./components/PhotoBooth";
+import PhotoBoothGroup from "./components/PhotoBoothGroup";
 import PhotoPreview from "./components/PhotoPreview";
+import PhotoPreviewGroup from "./components/PhotoPreviewGroup";
 import PrivacyPolicy from './components/PrivacyPolicy';
 import Contact from "./components/Contact";
 
 
 function App() {
   const [capturedImages, setCapturedImages] = useState([]);
+  const [capturedImagesGroup, setCapturedImagesGroup] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const toggleMobileNav = () => {
@@ -50,7 +53,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/photobooth" element={<PhotoBooth setCapturedImages={setCapturedImages} />} />
+          <Route path="/photobooth-group" element={<PhotoBoothGroup setCapturedImagesGroup={setCapturedImagesGroup} />} />
           <Route path="/preview" element={<PhotoPreview capturedImages={capturedImages} />} />
+          <Route path="/preview-group" element={<PhotoPreviewGroup capturedImagesGroup={capturedImagesGroup} />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<Contact />} />
         </Routes>
