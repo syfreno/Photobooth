@@ -2,17 +2,11 @@ import "./App.css";
 import React, { useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";  
 import Home from "./components/Home";
-import Welcome from "./components/Welcome";
-import PhotoBooth from "./components/PhotoBooth";
 import PhotoBoothGroup from "./components/PhotoBoothGroup";
-import PhotoPreview from "./components/PhotoPreview";
 import PhotoPreviewGroup from "./components/PhotoPreviewGroup";
-import PrivacyPolicy from './components/PrivacyPolicy';
-import Contact from "./components/Contact";
-
+import Settings from './components/Settings';
 
 function App() {
-  const [capturedImages, setCapturedImages] = useState([]);
   const [capturedImagesGroup, setCapturedImagesGroup] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
@@ -27,15 +21,6 @@ function App() {
   return (
     <div className="App">
       <nav className="navbar">
-        <Link to="/" className="logo" onClick={closeMobileNav}></Link>
-
-        {/* Navigation Links */}
-        <div className={`nav-links ${isMobileNavOpen ? "open" : ""}`}>
-          <Link to="/" onClick={closeMobileNav}>Home</Link>
-          <Link to="/privacy-policy" onClick={closeMobileNav}>Privacy Policy</Link>
-          <Link to="/contact" onClick={closeMobileNav}>Contact</Link>
-        </div>
-
         {/* Hamburger Icon (Mobile Only) */}
         <div className={`hamburger ${isMobileNavOpen ? "open" : ""}`} onClick={toggleMobileNav}>
           <div className="bar"></div>
@@ -51,13 +36,9 @@ function App() {
         {/* App Routes */}
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/welcome" element={<Welcome />} />
-          <Route path="/photobooth" element={<PhotoBooth setCapturedImages={setCapturedImages} />} />
           <Route path="/photobooth-group" element={<PhotoBoothGroup setCapturedImagesGroup={setCapturedImagesGroup} />} />
-          <Route path="/preview" element={<PhotoPreview capturedImages={capturedImages} />} />
           <Route path="/preview-group" element={<PhotoPreviewGroup capturedImagesGroup={capturedImagesGroup} />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
     </div>

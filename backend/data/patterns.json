@@ -1,0 +1,60 @@
+{
+  "patterns": [
+    {
+      "id": "1749390649636",
+      "name": "leopard",
+      "filename": "1749390649627-57984130.jpg",
+      "url": "/uploads/patterns/1749390649627-57984130.jpg",
+      "createdAt": "2025-06-08T13:50:49.636Z"
+    },
+    {
+      "id": "1749755458868",
+      "name": "Newspaper",
+      "filename": "1749755458857-52860239.jpeg",
+      "url": "/uploads/patterns/1749755458857-52860239.jpeg",
+      "createdAt": "2025-06-12T19:10:58.868Z"
+    },
+    {
+      "id": "1749755886028",
+      "name": "Valentine",
+      "filename": "1749755885966-349531884.jpeg",
+      "url": "/uploads/patterns/1749755885966-349531884.jpeg",
+      "createdAt": "2025-06-12T19:18:06.028Z"
+    },
+    {
+      "id": "1749756234068",
+      "name": "Gradient",
+      "filename": "1749756234066-47275942.jpeg",
+      "url": "/uploads/patterns/1749756234066-47275942.jpeg",
+      "createdAt": "2025-06-12T19:23:54.068Z"
+    },
+    {
+      "id": "1749757477025",
+      "name": "Tai Lung",
+      "filename": "1749757476962-378809835.jpeg",
+      "url": "/uploads/patterns/1749757476962-378809835.jpeg",
+      "createdAt": "2025-06-12T19:44:37.025Z"
+    },
+    {
+      "id": "1749758505441",
+      "name": "Cow",
+      "filename": "1749758505440-589357924.jpeg",
+      "url": "/uploads/patterns/1749758505440-589357924.jpeg",
+      "createdAt": "2025-06-12T20:01:45.441Z"
+    },
+    {
+      "id": "1749758782075",
+      "name": "Hologram",
+      "filename": "1749758782014-989114445.jpeg",
+      "url": "/uploads/patterns/1749758782014-989114445.jpeg",
+      "createdAt": "2025-06-12T20:06:22.075Z"
+    },
+    {
+      "id": "1750546858378",
+      "name": "Perunggu",
+      "filename": "1750546858375-599014700.png",
+      "url": "/uploads/patterns/1750546858375-599014700.png",
+      "createdAt": "2025-06-21T23:00:58.378Z"
+    }
+  ]
+}

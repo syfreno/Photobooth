@@ -3,3 +3,5 @@ node_modules/
 uploads/
 saved_emails/
 .DS_Store
+config/google-drive-credentials.json
+config/photobooth-app-461419-5503ba15de80.json

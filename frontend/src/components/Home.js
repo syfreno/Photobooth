@@ -1,40 +1,113 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaInstagram, FaCamera, FaHeart } from "react-icons/fa";
 import "../App.css";
 
 const Home = () => {
   const navigate = useNavigate();
 
-  return (
-    <div className="background-gradient h-screen flex  flex-col justify-center items-center text-center">
-      <div className="home-container">
-        <h1 className="text-5xl font-bold text-pink-600 mb-4">picapica</h1>
-        <p className="text-lg text-gray-700 mb-6">
-          Welcome to Agnes' photobooth! This is your personal photobooth at home.
-        </p>      
-          
-        <img src="/photobooth-strip.png" alt="photobooth strip" className="photobooth-strip"/>
-        
-        <button onClick={() => navigate("/welcome")} className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition">
-          START
-        </button>
-
-        <footer className="mt-8 text-sm text-gray-600">
-          <p>
-            made by{" "}
-            <a
-              href="https://agneswei.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{ color: "pink", textDecoration: "none" }}>
-              agneswei
-              </a>
-            </p>
-            <p>© 2025 Agnes Wei. All Rights Reserved.</p>
-        </footer>
-      </div>
-    </div>
-    );
+  const handleStart = () => {
+    navigate('/photobooth-group');
   };
+
+  const handleInstagramClick = () => {
+    window.open('https://www.instagram.com/nusanarrative.id?igsh=MXBsY3hsOHlncWJnMQ==', '_blank');
+  };
+
+  // Generate stars
+  const renderStars = () => {
+    return [...Array(150)].map((_, index) => {
+      const size = Math.random() * 3;
+      return (
+        <div
+          key={index}
+          className="star"
+          style={{
+            width: `${size}px`,
+            height: `${size}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            '--twinkle-duration': `${Math.random() * 4 + 2}s`
+          }}
+        />
+      );
+    });
+  };
+
+  // Generate shooting stars
+  const renderShootingStars = () => {
+    return [...Array(5)].map((_, index) => (
+      <div
+        key={index}
+        className="shooting-star"
+        style={{
+          top: `${Math.random() * 100}%`,
+          left: `${Math.random() * 100}%`,
+          '--shooting-duration': `${Math.random() * 2 + 1}s`,
+          animationDelay: `${Math.random() * 5}s`
+        }}
+      />
+    ));
+  };
+
+  return (
+    <>
+      <div className="space-bg">
+        <div className="stars">
+          {renderStars()}
+        </div>
+        {renderShootingStars()}
+        <div className="nebula" />
+        <div className="aurora" />
+      </div>
+
+      <div className="home-container">
+        <div className="content-wrapper">
+          <div className="logo-section">
+            <div className="creative-logo">
+              <div className="camera-icon">
+                <FaCamera />
+              </div>
+              <div className="heart-icon">
+                <FaHeart />
+              </div>
+            </div>
+            
+            <h1 className="welcome-text">Welcome to</h1>
+            <h2 className="brand-name">Nusanarrative</h2>
+            <p className="tagline">Capture Your Precious Moments</p>
+          </div>
+
+          <div className="strip-container">
+            <img 
+              src="/photobooth-strip.png" 
+              alt="Photo Strip" 
+              className="photo-strip"
+            />
+          </div>
+
+          <div className="action-section">
+            <button 
+              className="start-button"
+              onClick={handleStart}
+            >
+              START
+            </button>
+
+            <div className="social-media">
+              <button 
+                className="instagram-button"
+                onClick={handleInstagramClick}
+              >
+                <FaInstagram className="instagram-icon" />
+                <span>Follow Us on Instagram</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 export default Home;

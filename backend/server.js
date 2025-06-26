@@ -1,4 +1,5 @@
 const express = require("express");
+const { exec } = require('child_process');
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
@@ -6,65 +7,102 @@ const fs = require("fs");
 const nodemailer = require("nodemailer");
 const { log } = require("console");
 require("dotenv").config();
-
+const bodyParser = require('body-parser');
 const app = express();
-app.use(express.json({ limit: '10mb' })); // To handle large image data
-const PORT = process.env.PORT || 5000;
+const driveRoutes = require("./routes/driveRoutes");
+const patternRoutes = require("./routes/patternRoutes");
 
-// Create necessary directories
-const emailsDir = path.join(__dirname, "saved_emails");
-if (!fs.existsSync(emailsDir)) {
-  fs.mkdirSync(emailsDir);
-  console.log("Saved emails directory created");
-}
+// Set PORT dan pastikan tidak bentrok
+const PORT = process.env.PORT || 5000; // Gunakan port dari env atau 5000
 
-// Create email logs directory
-const emailLogsDir = path.join(__dirname, "email_logs");
-if (!fs.existsSync(emailLogsDir)) {
-  fs.mkdirSync(emailLogsDir);
-  console.log("Email logs directory created");
-}
-
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
+// Enable CORS with specific options
 app.use(cors({
-  origin: ["http://localhost:3000"], 
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  origin: ['http://localhost:3000', 'http://localhost:5000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  exposedHeaders: ['Access-Control-Allow-Origin'],
   credentials: true
 }));
 
-app.use(express.static("uploads"));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(bodyParser.json({ limit: '10mb' }));
 
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-  console.log("Uploads directory created");
-}
-
-// Email validation function
-const validateEmail = (email) => {
-  // Basic regex for email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) return false;
-  
-  // Check for common typos and issues
-  if (email.includes('..') || email.endsWith('.') || email.startsWith('.')) return false;
-  if (email.includes('@@') || email.startsWith('@')) return false;
-  
-  // Get domain part
-  const domain = email.split('@')[1];
-  if (!domain || domain.length < 3) return false;
-  
-  // Check for valid TLD
-  const tld = domain.split('.').pop();
-  if (!tld || tld.length < 2) return false;
-  
-  return true;
+// Camera settings storage
+let photoboothSettings = {
+  framesPerStrip: 4,    // Jumlah frame dalam satu strip
+  numberOfStrips: 1,    // Jumlah strip yang akan dibuat
+  printCount: 2,        // Jumlah print per strip
+  selectedPrinter: 'HP Deskjet',  // Default printer selection
+  camera: {
+    type: 'webcam',
+    deviceId: '',
+    model: '',
+    settings: {
+      iso: 'auto',
+      shutterSpeed: 'auto',
+      aperture: 'auto',
+      whiteBalance: 'auto'
+    }
+  }
 };
 
-// Create a robust email transporter
+// Setup directories
+const uploadsDir = path.join(__dirname, "uploads");
+const patternsDir = path.join(uploadsDir, "patterns");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log(`Created uploads directory at: ${uploadsDir}`);
+}
+if (!fs.existsSync(patternsDir)) {
+  fs.mkdirSync(patternsDir, { recursive: true });
+  console.log(`Created patterns directory at: ${patternsDir}`);
+}
+
+// Serve static files with proper CORS headers
+const staticFileMiddleware = (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+};
+
+// Serve uploads directory
+app.use('/uploads', staticFileMiddleware, express.static(uploadsDir, {
+  setHeaders: (res, path, stat) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+}));
+
+// Serve patterns directory specifically
+app.use('/uploads/patterns', staticFileMiddleware, express.static(patternsDir, {
+  setHeaders: (res, path, stat) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+}));
+
+console.log(`Serving uploads from: ${uploadsDir}`);
+console.log(`Serving patterns from: ${patternsDir}`);
+
+// Email validation and utilities
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && 
+         !email.includes('..') && 
+         !email.endsWith('.') && 
+         !email.startsWith('@');
+};
+
 const createTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
@@ -75,538 +113,680 @@ const createTransporter = () => {
       user: process.env.EMAIL,
       pass: process.env.EMAIL_APP_PASS
     },
-    tls: {
-      rejectUnauthorized: false
-    },
-    // Add these options for better reliability
-    pool: true, // Use connection pool
-    maxConnections: 5,
-    maxMessages: 100,
-    rateDelta: 1000,
-    rateLimit: 5, // Limit to 5 messages per second
-    // Set timeout values
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 30000,
+    tls: { rejectUnauthorized: false },
+    pool: true,
+    maxConnections: 5
   });
 };
 
-// Function to log email attempts
-const logEmailAttempt = (recipientEmail, success, messageId = null, errorDetails = null) => {
-  try {
-    const timestamp = new Date().toISOString();
-    const logEntry = {
-      timestamp,
-      recipient: recipientEmail,
-      success,
-      messageId,
-      errorDetails: errorDetails ? JSON.stringify(errorDetails) : null
-    };
-    
-    // Create filename based on date
-    const date = new Date().toISOString().split('T')[0];
-    const logFilePath = path.join(emailLogsDir, `email_log_${date}.json`);
-    
-    // Append to existing file or create new one
-    let logs = [];
-    if (fs.existsSync(logFilePath)) {
-      const fileContent = fs.readFileSync(logFilePath, 'utf8');
-      logs = JSON.parse(fileContent);
-    }
-    
-    logs.push(logEntry);
-    fs.writeFileSync(logFilePath, JSON.stringify(logs, null, 2));
-    
-    console.log(`Email attempt logged: ${success ? 'SUCCESS' : 'FAILED'} - ${recipientEmail}`);
-  } catch (err) {
-    console.error("Error logging email attempt:", err);
-  }
-};
+// Multer setup for photos
+const photoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => cb(null, `photo-${Date.now()}${path.extname(file.originalname)}`)
+});
 
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); 
+const uploadPhoto = multer({ storage: photoStorage });
+
+// Multer setup for patterns
+const patternStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
   },
-  filename: (req, file, cb) => {
-    cb(null, `photo-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
-const upload = multer({ storage });
-
-// Upload endpoint
-app.post("/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded" });
+  filename: function (req, file, cb) {
+    console.log('Uploading pattern:', file.originalname);
+    const filename = `pattern-${Date.now()}${path.extname(file.originalname)}`;
+    console.log('Generated pattern filename:', filename);
+    cb(null, filename);
   }
-  console.log("File uploaded:", req.file.filename);
-  res.json({ imageUrl: `/${req.file.filename}` });
 });
 
-// Get images endpoint
-app.get("/images", (req, res) => {
-  fs.readdir(uploadDir, (err, files) => {
-    if (err) {
-      console.error("Error reading uploads directory:", err);
-      return res.status(500).json({ message: "Error reading uploads" });
+const uploadPattern = multer({ 
+  storage: patternStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
     }
-    res.json(files.map(file => ({ url: `/${file}` })));
-  });
+  }
 });
 
-// Send contact message endpoint
-app.post("/send-message", async (req, res) => {
-  const { name, email, message } = req.body;
+// Routes
+app.use('/api', driveRoutes);
+app.use('/api', patternRoutes);
 
-  if (!name || !email || !message) {
-    return res.status(400).json({ message: "All fields are required" });
+app.post("/send-email", async (req, res) => {
+  const { recipientEmail, imageData, name } = req.body;
+
+  if (!recipientEmail || !validateEmail(recipientEmail)) {
+    return res.status(400).json({ success: false, message: "Email tidak valid" });
   }
-
-  console.log("Incoming message:", { name, email, message });
-
-  const logDir = path.join(__dirname, "email_logs");
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir);
-  }
-
-  const logRequest = {
-    timestamp: new Date().toISOString(),
-    sender: email,
-    name,
-    messagePreview: message.substring(0, 50) + (message.length > 50 ? "..." : "")
-  };
-  
-  fs.writeFileSync(
-    path.join(logDir, `request_${Date.now()}.json`), 
-    JSON.stringify(logRequest, null, 2)
-  );
 
   try {
-    console.log("Testing email credentials...");
-    console.log("Using email:", process.env.EMAIL);
-    console.log("Password length:", process.enc.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0);
-    
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
-      },
-      tls: {
-        rejectUnauthorized: false
-      },
-      // Add these options for better reliability
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      debug: true // Enable debug output
-    });
-    
-    // Verify connection
-    await transporter.verify();
-    console.log("Email server is ready");
+    const transporter = createTransporter();
+    const base64Data = imageData.replace(/^data:image\/jpeg;base64,/, "");
+    const buffer = Buffer.from(base64Data, 'base64');
 
-    const formattedFrom = name ? `"${name}" <${email}>` : email;
-    
     const mailOptions = {
-      from: formattedFrom,
-      to: process.env.EMAIL,
-      subject: `New Message from ${name}`,
-      text: `Email: ${email}\n\nMessage:\n${message}`,
-      replyTo: email
+      from: `"Nusanarrative Photobooth" <${process.env.EMAIL}>`,
+      to: recipientEmail,
+      subject: `Foto Anda - ${name}`,
+      text: `Halo! Berikut foto photobooth Anda. Terima kasih telah menggunakan layanan kami!`,
+      attachments: [{
+        filename: `${name}_photobooth.jpg`,
+        content: buffer,
+        contentType: 'image/jpeg'
+      }]
     };
 
-    const sendWithRetry = async (attempts = 3, delay = 1000) => {
-      try {
-        return await transporter.sendMail(mailOptions);
-      } catch (error) {
-        if (attempts <= 1) throw error;
-        console.log(`Email send failed, retrying... (${attempts-1} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return sendWithRetry(attempts - 1, delay * 1.5);
-      }
-    };
-
-    const info = await sendWithRetry();
-    console.log("Email sent:", info.response);
+    await transporter.sendMail(mailOptions);
     
-    // Log successful email
-    const logSuccess = {
-      timestamp: new Date().toISOString(),
-      sender: email,
-      status: "success",
-      messageId: info.messageId,
-      response: info.response
+    // Simpan log email
+    const emailLog = {
+      timestamp: new Date(),
+      recipient: recipientEmail
     };
+    fs.appendFileSync(path.join(__dirname, "email_logs/emails.log"), 
+      JSON.stringify(emailLog) + "\n");
 
-    fs.writeFileSync(
-      path.join(logDir, `success_${Date.now()}.json`), 
-      JSON.stringify(logSuccess, null, 2)
-    );
-
-    res.status(200).json({ message: "Email sent successfully" });
+    res.json({ success: true, message: "Email terkirim" });
   } catch (error) {
-    console.error("Error sending email:", error);
-    
-    // Log failed email
-    const logError = {
-      timestamp: new Date().toISOString(),
-      sender: email,
-      status: "error",
-      errorCode: error.code || "unknown",
-      errorMessage: error.message,
-      stack: error.stack
-    };
-    
-    fs.writeFileSync(
-      path.join(logDir, `error_${Date.now()}.json`), 
-      JSON.stringify(logError, null, 2)
-    );
-
-    // Save the failed message for later processing
-    const failedEmail = {
-      timestamp: new Date().toISOString(),
-      name,
-      email,
-      message
-    };
-    
-    fs.writeFileSync(
-      path.join(__dirname, "saved_emails", `failed_${Date.now()}.json`), 
-      JSON.stringify(failedEmail, null, 2)
-    );
-
+    console.error("Email send error:", error);
     res.status(500).json({ 
-      message: "Failed to send email. Your message has been saved and we'll try to process it later.", 
+      success: false, 
+      message: "Gagal mengirim email",
       error: error.message 
     });
   }
 });
 
-// Send photo strip endpoint
-app.post("/send-photo-strip", async (req, res) => {
-  const { recipientEmail, imageData } = req.body;
-
-  console.log("Attempting to send photo strip to:", recipientEmail);
-  console.log("Environment variables check:", {
-    hasEmail: !!process.env.EMAIL,
-    hasEmailPass: !!process.env.EMAIL_PASS
-  });
-  
-  // Email validation
-  if (!recipientEmail || !imageData) {
-    return res.status(400).json({ 
-      success: false,
-      message: "Missing email or image data" 
+// Fungsi untuk validasi printer
+function validatePrinter(printerName) {
+    return new Promise((resolve, reject) => {
+        exec('wmic printer get name', (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            
+            const printers = stdout.split('\n')
+                .slice(1)
+                .map(line => line.trim())
+                .filter(name => name.length > 0);
+            
+            // Check for exact match first
+            let isValid = printers.some(printer => 
+                printer.toLowerCase() === printerName.toLowerCase()
+            );
+            
+            // If no exact match, check for partial match (for HP Deskjet variants)
+            if (!isValid) {
+                const hpDeskjetModels = [
+                    'hp deskjet 2130',
+                    'hp deskjet 2135', 
+                    'hp deskjet 2130 series',
+                    'hp dj 2130',
+                    'hp dj 2135',
+                    'hp dj 2130 series',
+                    'hp deskjet',
+                    'hp dj'
+                ];
+                
+                // Check if the requested printer is an HP Deskjet variant
+                const isHPDeskjetRequest = hpDeskjetModels.some(model => 
+                    printerName.toLowerCase().includes(model.toLowerCase())
+                );
+                
+                if (isHPDeskjetRequest) {
+                    // Find any HP Deskjet printer as a match
+                    const hpDeskjetMatch = printers.find(printer => 
+                        hpDeskjetModels.some(model => 
+                            printer.toLowerCase().includes(model.toLowerCase())
+                        )
+                    );
+                    
+                    if (hpDeskjetMatch) {
+                        isValid = true;
+                        console.log(`HP Deskjet variant matched: "${printerName}" -> "${hpDeskjetMatch}"`);
+                    }
+                }
+            }
+            
+            resolve({ isValid, printers });
+        });
     });
-  }
-  
-  if (!validateEmail(recipientEmail)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid email format"
-    });
-  }
+}
 
-  try {
-    // Create transporter with improved configuration
-    const transporter = createTransporter();
+app.post('/api/print', async (req, res) => {
+    if (!req.body.imageData) {
+        return res.status(400).json({ error: 'Image data is required' });
+    }
+
+    const { imageData, printerName = 'HP Deskjet 2130', stripIndex = 0 } = req.body;
     
-    // Verify connection
-    await transporter.verify();
-    console.log("Email transporter verified successfully");
-
-    // Better handling of the image data
-    let imageContent;
     try {
-      const parts = imageData.split("base64,");
-      if (parts.length !== 2) {
-        throw new Error("Invalid image data format");
-      }
-      imageContent = parts[1];
-    } catch (error) {
-      console.error("Error processing image data:", error);
-      return res.status(400).json({
-        success: false,
-        message: "Invalid image data format"
-      });
-    }
+        // Validasi printer terlebih dahulu
+        let actualPrinterName = printerName;
+        try {
+            const { isValid, printers } = await validatePrinter(printerName);
+            if (!isValid) {
+                console.error(`Printer "${printerName}" not found. Available printers:`, printers);
+                return res.status(400).json({ 
+                    error: `Printer "${printerName}" not found`,
+                    availablePrinters: printers
+                });
+            }
+            
+            // Find the actual printer name in the system
+            const hpDeskjetModels = [
+                'hp deskjet 2130',
+                'hp deskjet 2135', 
+                'hp deskjet 2130 series',
+                'hp dj 2130',
+                'hp dj 2135',
+                'hp dj 2130 series',
+                'hp deskjet',
+                'hp dj'
+            ];
+            
+            // If it's an HP Deskjet variant, find the actual printer name
+            const isHPDeskjetRequest = hpDeskjetModels.some(model => 
+                printerName.toLowerCase().includes(model.toLowerCase())
+            );
+            
+            if (isHPDeskjetRequest) {
+                const actualPrinter = printers.find(printer => 
+                    hpDeskjetModels.some(model => 
+                        printer.toLowerCase().includes(model.toLowerCase())
+                    )
+                );
+                if (actualPrinter) {
+                    actualPrinterName = actualPrinter;
+                    console.log(`Using actual printer name: "${actualPrinterName}" instead of "${printerName}"`);
+                }
+            }
+            
+            console.log(`Printer "${actualPrinterName}" validated successfully`);
+        } catch (validationError) {
+            console.error('Error validating printer:', validationError);
+            return res.status(500).json({ error: 'Failed to validate printer' });
+        }
 
-    const mailOptions = {
-      from: `"Picapica Photobooth" <${process.env.EMAIL}>`, // Use a friendly sender name
-      to: recipientEmail,
-      subject: "Your Photo Strip from Picapica 📸",
-      text: "Thanks for using Picapica! Here's your photo strip. We hope you had fun!",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-          <h1 style="color: #ff69b4; text-align: center;">Your Picapica Photo Strip!</h1>
-          <p style="text-align: center; font-size: 16px;">
-            Thanks for using Picapica! Here's your photo strip.
-          </p>
-          <div style="text-align: center; margin: 20px 0;">
-            <img src="cid:photostrip" alt="Photo Strip" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
-          </div>
-          <p style="font-size: 14px; text-align: center; color: #777;">
-            © 2025 Agnes Wei. All Rights Reserved.
-          </p>
-        </div>
-      `,
-      attachments: [{
-        filename: "photo-strip.png",
-        content: imageContent,
-        encoding: "base64",
-        cid: "photostrip" // Referenced in the HTML above
-      }]
-    };
+        // Validasi base64
+        if (!imageData.startsWith('data:image/png;base64,')) {
+            return res.status(400).json({ error: 'Invalid image format' });
+        }
 
-    // Add a delay to prevent rate limiting
-    await new Promise(resolve => setTimeout(resolve, 300));
+        const base64Data = imageData.replace(/^data:image\/png;base64,/, "");
+        const tempDir = path.join(__dirname, 'temp');
+        const fileName = `print_strip${stripIndex}_${Date.now()}.png`;
+        const filePath = path.join(tempDir, fileName);
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", info.messageId);
-    
-    // Log successful email
-    logEmailAttempt(recipientEmail, true, info.messageId);
+        // Buat folder temp dengan error handling
+        try {
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+        } catch (err) {
+            console.error('Error creating temp dir:', err);
+            return res.status(500).json({ error: 'Failed to create temp directory' });
+        }
 
-    res.status(200).json({
-      success: true,
-      message: "Photo strip sent successfully!",
-      messageId: info.messageId
-    });
-  } catch (error) {
-    console.error("Email sending error:", error);
-    
-    // Log failed email
-    logEmailAttempt(recipientEmail, false, null, {
-      code: error.code,
-      message: error.message
-    });
-    
-    // More descriptive error responses
-    let errorMessage = "Failed to send email";
-    let statusCode = 500;
-    
-    if (error.code === 'EENVELOPE') {
-      errorMessage = "Invalid recipient email address";
-      statusCode = 400;
-    } else if (error.code === 'ETIMEDOUT') {
-      errorMessage = "Connection to email server timed out";
-    } else if (error.code === 'EAUTH') {
-      errorMessage = "Email authentication failed. Check your credentials.";
-    }
-    
-    res.status(statusCode).json({
-      success: false,
-      message: errorMessage,
-      error: error.toString()
-    });
-  }
-});
+        // Simpan gambar dengan error handling
+        try {
+            fs.writeFileSync(filePath, base64Data, 'base64');
+            console.log(`Image saved to: ${filePath}`);
+        } catch (err) {
+            console.error('Error saving image:', err);
+            return res.status(500).json({ error: 'Failed to save image' });
+        }
 
-// Saved emails endpoint
-app.get("/saved-emails", (req, res) => {
-  fs.readdir(emailsDir, (err, files) => {
-    if (err) {
-      return res.status(500).json({ message: "Error reading saved emails" });
-    }
-    const emails = files
-      .filter(file => file.endsWith('.json'))
-      .map(file => {
-        const data = JSON.parse(fs.readFileSync(path.join(emailsDir, file)));
-        return {
-          filename: file,
-          to: data.to,
-          date: data.date
+        // Perintah print dengan timeout - menggunakan multiple methods untuk reliability
+        const printCommands = [
+            // Method 1: Using rundll32 with Windows Photo Viewer
+            `rundll32 shimgvw.dll,ImageView_PrintTo "${filePath}" "${actualPrinterName}"`,
+            // Method 2: Using mspaint with quotes
+            `"C:\\Windows\\System32\\mspaint.exe" /pt "${filePath}" "${actualPrinterName}"`,
+            // Method 3: Using start command with mspaint
+            `start /min "" "C:\\Windows\\System32\\mspaint.exe" /pt "${filePath}" "${actualPrinterName}"`,
+            // Method 4: Using PowerShell
+            `powershell -Command "Start-Process -FilePath 'C:\\Windows\\System32\\mspaint.exe' -ArgumentList '/pt', '${filePath}', '${actualPrinterName}' -WindowStyle Hidden"`
+        ];
+
+        const timeout = 60000; // 60 detik timeout
+        let printSuccess = false;
+        let lastError = null;
+
+        // Try each print command until one works
+        const tryPrint = (commandIndex) => {
+            if (commandIndex >= printCommands.length) {
+                // All commands failed
+                cleanupFile(filePath);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'All print methods failed',
+                    details: lastError,
+                    printerName: actualPrinterName
+                });
+            }
+
+            const printCommand = printCommands[commandIndex];
+            console.log(`Trying print command ${commandIndex + 1}: ${printCommand}`);
+
+            exec(printCommand, { timeout }, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`Print command ${commandIndex + 1} failed:`, error);
+                    lastError = error.message;
+                    // Try next command
+                    setTimeout(() => tryPrint(commandIndex + 1), 1000);
+                } else {
+                    console.log(`Print command ${commandIndex + 1} succeeded`);
+                    printSuccess = true;
+                    cleanupFile(filePath);
+                    res.json({ 
+                        success: true,
+                        message: `Print job sent to ${actualPrinterName} for strip ${stripIndex + 1}`,
+                        method: `Command ${commandIndex + 1}`,
+                        actualPrinterName: actualPrinterName
+                    });
+                }
+            });
         };
-      });
-    res.json(emails);
-  });
+
+        // Start with first command
+        tryPrint(0);
+
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        cleanupFile(filePath);
+        res.status(500).json({ 
+            success: false,
+            error: 'Internal server error',
+            details: err.message
+        });
+    }
 });
 
-// Test endpoint to verify email configuration
-app.get("/test-email", async (req, res) => {
-  const testEmail = req.query.email;
-  const adminKey = req.query.key;
-  
-  // Simple admin key protection - you should change this to a secure value
-  if (adminKey !== "picapica-admin-key") {
-    return res.status(401).json({ message: "Unauthorized access" });
-  }
-  
-  if (!testEmail) {
-    return res.status(400).json({ message: "Email parameter is required" });
-  }
-  
-  try {
-    console.log("Testing email delivery to:", testEmail);
-    
-    if (!validateEmail(testEmail)) {
-      return res.status(400).json({ message: "Invalid email format" });
+// Fungsi helper untuk cleanup file
+function cleanupFile(filePath) {
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (err) {
+        console.error('Error cleaning up file:', err);
     }
-    
-    // Create a transporter with diagnostics enabled
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_APP_PASS
-      },
-      tls: {
-        rejectUnauthorized: false
-      },
-      debug: true,
-      logger: true
+}
+
+app.post("/upload", uploadPhoto.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+  res.json({ imageUrl: `/${req.file.filename}` });
+});
+
+// Dapatkan daftar printer
+app.get('/api/printers', (req, res) => {
+    exec('wmic printer get name', (error, stdout, stderr) => {
+        if (error) {
+            console.error('Error getting printers:', error);
+            return res.status(500).json({ error: 'Gagal mendapatkan daftar printer' });
+        }
+        
+        const printers = stdout.split('\n')
+            .slice(1) // Hilangkan header
+            .map(line => line.trim())
+            .filter(name => name.length > 0);
+
+        console.log('Available printers:', printers);
+        
+        // Check for various HP Deskjet models (case insensitive)
+        const hpDeskjetModels = [
+            'hp deskjet 2130',
+            'hp deskjet 2135', 
+            'hp deskjet 2130 series',
+            'hp dj 2130',
+            'hp dj 2135',
+            'hp dj 2130 series',
+            'hp deskjet',
+            'hp dj'
+        ];
+        
+        // Find HP Deskjet printers
+        const hpDeskjetPrinters = printers.filter(printer => 
+            hpDeskjetModels.some(model => 
+                printer.toLowerCase().includes(model.toLowerCase())
+            )
+        );
+        
+        // Check if any HP Deskjet is found
+        const hasHPDeskjet = hpDeskjetPrinters.length > 0;
+        
+        // Find the best match for default printer
+        let defaultHPPrinter = null;
+        
+        // Priority order for default printer
+        const priorityModels = [
+            'hp deskjet 2135',
+            'hp deskjet 2130 series',
+            'hp dj 2130 series',
+            'hp deskjet 2130',
+            'hp dj 2135',
+            'hp dj 2130',
+            'hp deskjet',
+            'hp dj'
+        ];
+        
+        for (const model of priorityModels) {
+            const match = printers.find(printer => 
+                printer.toLowerCase().includes(model.toLowerCase())
+            );
+            if (match) {
+                defaultHPPrinter = match;
+                break;
+            }
+        }
+        
+        if (!hasHPDeskjet) {
+            console.warn('No HP Deskjet printers found in printer list');
+            console.log('Available printers for reference:', printers);
+        } else {
+            console.log('HP Deskjet printers found:', hpDeskjetPrinters);
+            console.log('Default HP printer selected:', defaultHPPrinter);
+        }
+
+        res.json({ 
+            printers,
+            hasHPDeskjet,
+            hpDeskjetPrinters,
+            defaultHPPrinter: defaultHPPrinter || 'HP Deskjet 2130',
+            supportedModels: hpDeskjetModels
+        });
     });
-    
-    // Check transporter configuration
-    const verificationResult = await transporter.verify();
-    console.log("Transporter verification:", verificationResult);
-    
-    // Test email options
-    const mailOptions = {
-      from: `"Picapica Test" <${process.env.EMAIL}>`,
-      to: testEmail,
-      subject: "Email Delivery Test from Picapica",
-      text: "This is a test email to verify the delivery system is working correctly.",
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; border-radius: 5px;">
-          <h2 style="color: #ff69b4;">Picapica Email Test</h2>
-          <p>This is a test email to verify that our delivery system is working correctly.</p>
-          <p>Current server time: ${new Date().toLocaleString()}</p>
-          <p>If you received this email, the system is functioning properly!</p>
-        </div>
-      `
-    };
-    
-    // Send the test email with detailed response
-    const info = await transporter.sendMail(mailOptions);
-    
-    console.log("Test email sent:", info);
-    
-    // Log successful test email
-    logEmailAttempt(testEmail, true, info.messageId, { type: "test_email" });
-    
-    // Return detailed information
-    res.json({
-      success: true,
-      message: "Test email sent successfully",
-      details: {
-        messageId: info.messageId,
-        response: info.response,
-        accepted: info.accepted,
-        rejected: info.rejected,
-        envelope: info.envelope
+});
+
+// Camera connection endpoint
+app.post("/api/camera/connect", async (req, res) => {
+  try {
+    const { type, model, settings } = req.body;
+
+    // For DSLR cameras on Windows, we use digiCamControl
+    if (['dslr', 'canon', 'sony'].includes(type)) {
+      // Path to digiCamControl CLI - adjust this path according to your installation
+      const digiCamPath = 'C:\\Program Files (x86)\\digiCamControl\\CameraControlCmd.exe';
+      
+      // Check if digiCamControl is installed
+      if (!fs.existsSync(digiCamPath)) {
+        throw new Error('digiCamControl not found. Please install it first.');
       }
-    });
+
+      // Connect to camera using digiCamControl
+      exec(`"${digiCamPath}" /list`, (error, stdout, stderr) => {
+        if (error) {
+          console.error('Error listing cameras:', error);
+          return res.status(500).send('Failed to detect cameras');
+        }
+
+        // Parse the camera list
+        const cameras = stdout.trim().split('\n')
+          .filter(line => line.length > 0)
+          .map(line => line.trim());
+
+        if (cameras.length === 0) {
+          return res.status(404).send('No cameras detected');
+        }
+
+        // Configure camera settings if specified
+        if (settings && settings.iso !== 'auto') {
+          exec(`"${digiCamPath}" /iso ${settings.iso}`);
+        }
+        if (settings && settings.shutterSpeed !== 'auto') {
+          exec(`"${digiCamPath}" /shutter ${settings.shutterSpeed}`);
+        }
+        if (settings && settings.aperture !== 'auto') {
+          exec(`"${digiCamPath}" /aperture ${settings.aperture}`);
+        }
+        if (settings && settings.whiteBalance !== 'auto') {
+          exec(`"${digiCamPath}" /wb ${settings.whiteBalance}`);
+        }
+
+        // Start live view if available
+        exec(`"${digiCamPath}" /capture`);
+
+        // Return success with camera info
+        res.json({
+          success: true,
+          message: 'Camera connected successfully',
+          cameras: cameras
+        });
+      });
+    } else {
+      res.status(400).send('Unsupported camera type');
+    }
   } catch (error) {
-    console.error("Test email error:", error);
-    
-    // Log failed test email
-    logEmailAttempt(testEmail, false, null, {
-      code: error.code,
-      message: error.message,
-      type: "test_email"
-    });
-    
+    console.error('Error connecting to camera:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to send test email",
-      error: {
-        code: error.code,
-        message: error.message,
-        response: error.response
-      }
+      error: error.message || 'Failed to connect to camera'
     });
   }
 });
 
-// Email stats endpoint
-app.get("/email-stats", (req, res) => {
-  const adminKey = req.query.key;
-  
-  if (adminKey !== "picapica-admin-key") {
-    return res.status(401).json({ message: "Unauthorized access" });
-  }
-  
+// Add new endpoint for capturing photos with DSLR
+app.post("/api/camera/capture", async (req, res) => {
   try {
-    const files = fs.readdirSync(emailLogsDir);
-    let totalAttempts = 0;
-    let successfulDeliveries = 0;
-    let failedDeliveries = 0;
-    let domainStats = {};
+    const { type } = req.body;
     
-    files.forEach(file => {
-      if (file.endsWith('.json')) {
-        try {
-          const content = fs.readFileSync(path.join(emailLogsDir, file), 'utf8');
-          const logs = JSON.parse(content);
-          
-          logs.forEach(log => {
-            totalAttempts++;
-            
-            if (log.success) {
-              successfulDeliveries++;
-            } else {
-              failedDeliveries++;
-            }
-            
-            // Track domain-specific stats
-            try {
-              const domain = log.recipient.split('@')[1];
-              if (domain) {
-                if (!domainStats[domain]) {
-                  domainStats[domain] = { attempts: 0, success: 0, failure: 0 };
-                }
-                
-                domainStats[domain].attempts++;
-                if (log.success) {
-                  domainStats[domain].success++;
-                } else {
-                  domainStats[domain].failure++;
-                }
-              }
-            } catch (e) {
-              console.error("Error processing domain stats:", e);
-            }
-          });
-        } catch (error) {
-          console.error(`Error reading log file ${file}:`, error);
+    if (['dslr', 'canon', 'sony'].includes(type)) {
+      const digiCamPath = 'C:\\Program Files (x86)\\digiCamControl\\CameraControlCmd.exe';
+      const outputPath = path.join(__dirname, 'uploads', `dslr-${Date.now()}.jpg`);
+
+      // Capture photo using digiCamControl
+      exec(`"${digiCamPath}" /capture /filename "${outputPath}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error('Error capturing photo:', error);
+          return res.status(500).send('Failed to capture photo');
         }
-      }
-    });
-    
-    // Calculate success rates for each domain
-    Object.keys(domainStats).forEach(domain => {
-      const stats = domainStats[domain];
-      stats.successRate = stats.attempts > 0 
-        ? (stats.success / stats.attempts * 100).toFixed(2) + "%" 
-        : "0%";
-    });
-    
-    res.json({
-      totalAttempts,
-      successfulDeliveries,
-      failedDeliveries,
-      successRate: totalAttempts > 0 ? (successfulDeliveries / totalAttempts * 100).toFixed(2) + "%" : "0%",
-      domainStats
-    });
+
+        // Return the path to the captured photo
+        res.json({
+          success: true,
+          imagePath: `/uploads/${path.basename(outputPath)}`
+        });
+      });
+    } else {
+      res.status(400).send('Unsupported camera type');
+    }
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving stats", error: error.message });
+    console.error('Error capturing photo:', error);
+    res.status(500).send('Failed to capture photo');
   }
 });
 
-// Root endpoint
-app.get("/", (req, res) => {
-  res.send("Picapica Backend is running");
+// Settings endpoints
+app.get("/api/settings", (req, res) => {
+  res.json(photoboothSettings);
 });
 
-// Start the server
-app.listen(PORT, () => {
+app.post("/api/settings", (req, res) => {
+  try {
+    const newSettings = req.body;
+    
+    // Validate settings
+    if (!newSettings || typeof newSettings !== 'object') {
+      return res.status(400).send('Invalid settings format');
+    }
+
+    // Update settings
+    photoboothSettings = {
+      ...photoboothSettings,
+      ...newSettings
+    };
+
+    // Broadcast settings update to all connected clients
+    io.emit('settings-updated', photoboothSettings);
+
+    res.json({ success: true, settings: photoboothSettings });
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    res.status(500).send('Failed to save settings');
+  }
+});
+
+// Patterns storage
+let patterns = [];
+let nextPatternId = 1;
+
+// Patterns endpoints
+app.get("/api/patterns", (req, res) => {
+  console.log('GET /api/patterns - Current patterns:', patterns);
+  res.json(patterns);
+});
+
+app.post("/api/patterns", uploadPattern.single('patternImage'), (req, res) => {
+  console.log('POST /api/patterns - Received request');
+  console.log('File:', req.file);
+  console.log('Body:', req.body);
+
+  if (!req.file || !req.body.name) {
+    console.log('Missing file or name');
+    return res.status(400).json({ error: 'Missing file or name' });
+  }
+
+  const pattern = {
+    id: nextPatternId++,
+    name: req.body.name,
+    url: `/uploads/${req.file.filename}`  // Ubah URL pattern
+  };
+
+  patterns.push(pattern);
+  console.log('Added new pattern:', pattern);
+  res.json(pattern);
+});
+
+app.delete("/api/patterns/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const pattern = patterns.find(p => p.id === id);
+
+    if (pattern) {
+        // Delete file if it exists
+        const filename = pattern.url.split('/').pop();
+        const filepath = path.join(__dirname, "uploads", filename);
+        if (fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath);
+        }
+
+        // Remove from patterns array
+        patterns = patterns.filter(p => p.id !== id);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: "Pattern not found" });
+    }
+});
+
+// Test print endpoint untuk debugging
+app.post('/api/print/test', async (req, res) => {
+    const { printerName = 'HP Deskjet 2130' } = req.body;
+    
+    try {
+        // Validasi printer
+        const { isValid, printers } = await validatePrinter(printerName);
+        if (!isValid) {
+            return res.status(400).json({ 
+                error: `Printer "${printerName}" not found`,
+                availablePrinters: printers
+            });
+        }
+
+        // Buat test image sederhana
+        const testImagePath = path.join(__dirname, 'temp', `test_print_${Date.now()}.png`);
+        const tempDir = path.join(__dirname, 'temp');
+        
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+
+        // Buat test image dengan canvas (simple white image with text)
+        const { createCanvas } = require('canvas');
+        const canvas = createCanvas(400, 300);
+        const ctx = canvas.getContext('2d');
+        
+        // Fill white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 400, 300);
+        
+        // Add test text
+        ctx.fillStyle = 'black';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Test Print', 200, 150);
+        ctx.font = '16px Arial';
+        ctx.fillText(`Printer: ${printerName}`, 200, 180);
+        ctx.fillText(`Time: ${new Date().toLocaleString()}`, 200, 200);
+
+        // Save test image
+        const buffer = canvas.toBuffer('image/png');
+        fs.writeFileSync(testImagePath, buffer);
+
+        // Try to print test image
+        const printCommand = `rundll32 shimgvw.dll,ImageView_PrintTo "${testImagePath}" "${printerName}"`;
+        
+        exec(printCommand, { timeout: 30000 }, (error, stdout, stderr) => {
+            cleanupFile(testImagePath);
+            
+            if (error) {
+                console.error('Test print failed:', error);
+                res.status(500).json({ 
+                    success: false,
+                    error: 'Test print failed',
+                    details: error.message
+                });
+            } else {
+                console.log('Test print succeeded');
+                res.json({ 
+                    success: true,
+                    message: `Test print sent to ${printerName}`,
+                    printerName: printerName
+                });
+            }
+        });
+
+    } catch (err) {
+        console.error('Test print error:', err);
+        res.status(500).json({ 
+            success: false,
+            error: 'Test print error',
+            details: err.message
+        });
+    }
+});
+
+// Server setup
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Endpoint print: http://localhost:${PORT}/api/print`);
+});
+
+// Socket.io setup
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('New client connected');
+  socket.emit('settings-update', photoboothSettings);
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
+
+// Error handling
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
