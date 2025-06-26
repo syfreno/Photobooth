@@ -15,9 +15,17 @@ const patternRoutes = require("./routes/patternRoutes");
 // Set PORT dan pastikan tidak bentrok
 const PORT = process.env.PORT || 5000; // Gunakan port dari env atau 5000
 
+// Tambahkan domain frontend production kamu di sini
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'https://photobooth-vxcb-cc7o7hc3u-muhamad-syfarenos-projects.vercel.app',
+  // tambahkan custom domain kamu jika ada
+];
+
 // Enable CORS with specific options
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5000'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
   exposedHeaders: ['Access-Control-Allow-Origin'],
@@ -768,8 +776,9 @@ const server = app.listen(PORT, () => {
 // Socket.io setup
 const io = require('socket.io')(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
