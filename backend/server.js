@@ -19,13 +19,25 @@ const PORT = process.env.PORT || 5000; // Gunakan port dari env atau 5000
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5000',
-  'https://photobooth-vxcb-cc7o7hc3u-muhamad-syfarenos-projects.vercel.app',
-  // tambahkan custom domain kamu jika ada
 ];
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  // Izinkan semua subdomain .vercel.app (https)
+  if (/^https:\/\/[a-zA-Z0-9\-]+\.vercel\.app$/.test(origin)) return true;
+  return false;
+}
 
 // Enable CORS with specific options
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
   exposedHeaders: ['Access-Control-Allow-Origin'],
@@ -776,7 +788,13 @@ const server = app.listen(PORT, () => {
 // Socket.io setup
 const io = require('socket.io')(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true
   }
